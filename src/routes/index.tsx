@@ -98,8 +98,7 @@ function Sistema() {
   };
 
   const guardarPDF = async () => {
-    // @ts-expect-error global jsPDF via CDN if available
-    const jsPDF = (window as any).jspdf?.jsPDF;
+    const jsPDF = (window as unknown as { jspdf?: { jsPDF: unknown } }).jspdf?.jsPDF;
     if (!jsPDF) {
       // load on demand
       await new Promise<void>((res, rej) => {
@@ -111,7 +110,7 @@ function Sistema() {
         document.body.appendChild(s);
       });
     }
-    const JSPDF = (window as any).jspdf.jsPDF;
+    const JSPDF = (window as unknown as { jspdf: { jsPDF: new () => unknown } }).jspdf.jsPDF;
     const doc = new JSPDF();
     let y = 15;
     doc.setFontSize(18);
