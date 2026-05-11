@@ -73,7 +73,16 @@ function Sistema() {
   const [pagamento, setPagamento] = useState("Dinheiro");
   const [maoObra, setMaoObra] = useState<number | "">(0);
   const [transporte, setTransporte] = useState<number | "">(0);
-  const [codigo, setCodigo] = useState("FAT-001");
+  const proximoCodigo = (n: number) =>
+    String(Math.min(n, 1000)).padStart(4, "0");
+  const [codigo, setCodigo] = useState(() => {
+    const prev = JSON.parse(
+      (typeof localStorage !== "undefined" &&
+        localStorage.getItem("ikasu_faturas")) ||
+        "[]",
+    );
+    return proximoCodigo(prev.length + 1);
+  });
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   const hoje = new Date().toLocaleDateString("pt-PT");
@@ -181,10 +190,7 @@ function Sistema() {
     const prev = JSON.parse(localStorage.getItem("ikasu_faturas") || "[]");
     prev.push(dados);
     localStorage.setItem("ikasu_faturas", JSON.stringify(prev));
-    const next =
-      "FAT-" +
-      String(prev.length + 1).padStart(3, "0");
-    setCodigo(next);
+    setCodigo(proximoCodigo(prev.length + 1));
     alert("Fatura guardada com sucesso!");
   };
 
@@ -437,9 +443,9 @@ function Sistema() {
                 <p>
                   <b>Código:</b>{" "}
                   <input
-                    className="text-black border px-1"
+                    className="text-black border px-1 bg-slate-100"
                     value={codigo}
-                    onChange={(e) => setCodigo(e.target.value)}
+                    readOnly
                   />
                 </p>
                 <p>
