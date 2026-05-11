@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useRef } from "react";
+import logoUrl from "@/assets/logo-kamuengo.jpg";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -33,9 +34,11 @@ function Login({ onLogin }: { onLogin: () => void }) {
         }}
         className="w-[350px] bg-blue-800 p-10 rounded-3xl text-center shadow-2xl"
       >
-        <div className="w-28 h-28 mx-auto mb-5 rounded-full bg-white flex items-center justify-center text-blue-800 font-extrabold text-2xl">
-          KAMUENGO LDA
-        </div>
+        <img
+          src={logoUrl}
+          alt="KAMUENGO LDA"
+          className="w-28 h-28 mx-auto mb-5 rounded-full bg-white object-contain p-2"
+        />
         <h2 className="text-white text-xl font-bold mb-6">MEMBER LOGIN</h2>
         <input
           className="w-full p-3 my-2 rounded-lg text-black"
@@ -198,9 +201,11 @@ function Sistema() {
     <div className="min-h-screen p-5 bg-slate-900 text-white">
       <header className="flex items-center justify-between bg-slate-950 p-5 rounded-2xl mb-5 flex-wrap gap-3">
         <div className="flex items-center gap-4">
-          <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center text-blue-700 font-extrabold">
-            KAMUENGO LDA
-          </div>
+          <img
+            src={logoUrl}
+            alt="KAMUENGO LDA"
+            className="w-20 h-20 rounded-full bg-white object-contain p-1"
+          />
           <div>
             <h1 className="text-2xl font-bold">KAMUENGO LDA</h1>
             <p className="text-slate-300 text-sm">
@@ -257,9 +262,12 @@ function Sistema() {
           {selecionada && (
             <div className="bg-white text-black p-6 rounded-xl mt-5">
               <div className="flex justify-between mb-5 flex-wrap gap-3">
-                <div>
-                  <h1 className="text-blue-600 text-2xl font-extrabold">FATURA</h1>
-                  <p><b>Empresa:</b> KAMUENGO LDA</p>
+                <div className="flex items-center gap-3">
+                  <img src={logoUrl} alt="KAMUENGO LDA" className="w-16 h-16 object-contain" />
+                  <div>
+                    <h1 className="text-blue-600 text-2xl font-extrabold">FATURA</h1>
+                    <p><b>Empresa:</b> KAMUENGO LDA</p>
+                  </div>
                 </div>
                 <div className="text-right">
                   <p><b>Código:</b> {selecionada.codigo}</p>
@@ -408,19 +416,22 @@ function Sistema() {
             className="bg-white text-black p-6 rounded-xl"
           >
             <div className="flex justify-between mb-5 flex-wrap gap-3">
-              <div>
-                <h1 className="text-blue-600 text-2xl font-extrabold">
-                  FATURA
-                </h1>
-                <p>
-                  <b>Empresa:</b> KAMUENGO LDA
-                </p>
-                <p>
-                  <b>Contactos:</b> +244 900 000 000
-                </p>
-                <p>
-                  <b>Sobre:</b> Sistema Profissional de Venda
-                </p>
+              <div className="flex items-start gap-3">
+                <img src={logoUrl} alt="KAMUENGO LDA" className="w-20 h-20 object-contain" />
+                <div>
+                  <h1 className="text-blue-600 text-2xl font-extrabold">
+                    FATURA
+                  </h1>
+                  <p>
+                    <b>Empresa:</b> KAMUENGO LDA
+                  </p>
+                  <p>
+                    <b>Contactos:</b> +244 900 000 000
+                  </p>
+                  <p>
+                    <b>Sobre:</b> Sistema Profissional de Venda
+                  </p>
+                </div>
               </div>
               <div className="text-right">
                 <p>
