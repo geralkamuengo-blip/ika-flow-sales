@@ -34,7 +34,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         className="w-[350px] bg-blue-800 p-10 rounded-3xl text-center shadow-2xl"
       >
         <div className="w-28 h-28 mx-auto mb-5 rounded-full bg-white flex items-center justify-center text-blue-800 font-extrabold text-2xl">
-          IKA SU
+          KAMUENGO LDA
         </div>
         <h2 className="text-white text-xl font-bold mb-6">MEMBER LOGIN</h2>
         <input
@@ -130,7 +130,7 @@ function Sistema() {
     let y = 15;
     doc.setFontSize(18);
     doc.setTextColor(37, 99, 235);
-    doc.text("FATURA - IKA SU", 14, y);
+    doc.text("FATURA - KAMUENGO LDA", 14, y);
     y += 10;
     doc.setFontSize(11);
     doc.setTextColor(0);
@@ -199,10 +199,10 @@ function Sistema() {
       <header className="flex items-center justify-between bg-slate-950 p-5 rounded-2xl mb-5 flex-wrap gap-3">
         <div className="flex items-center gap-4">
           <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center text-blue-700 font-extrabold">
-            IKA SU
+            KAMUENGO LDA
           </div>
           <div>
-            <h1 className="text-2xl font-bold">IKA SU</h1>
+            <h1 className="text-2xl font-bold">KAMUENGO LDA</h1>
             <p className="text-slate-300 text-sm">
               Sistema de Venda &amp; Faturação
             </p>
@@ -259,7 +259,7 @@ function Sistema() {
               <div className="flex justify-between mb-5 flex-wrap gap-3">
                 <div>
                   <h1 className="text-blue-600 text-2xl font-extrabold">FATURA</h1>
-                  <p><b>Empresa:</b> IKA SU</p>
+                  <p><b>Empresa:</b> KAMUENGO LDA</p>
                 </div>
                 <div className="text-right">
                   <p><b>Código:</b> {selecionada.codigo}</p>
@@ -413,7 +413,7 @@ function Sistema() {
                   FATURA
                 </h1>
                 <p>
-                  <b>Empresa:</b> IKA SU
+                  <b>Empresa:</b> KAMUENGO LDA
                 </p>
                 <p>
                   <b>Contactos:</b> +244 900 000 000
@@ -504,7 +504,7 @@ function Sistema() {
       )}
 
       <footer className="text-center text-slate-400 mt-8">
-        Desenvolvido para IKA SU © 2026
+        Desenvolvido para KAMUENGO LDA © 2026
       </footer>
     </div>
   );
