@@ -262,9 +262,12 @@ function Sistema() {
           {selecionada && (
             <div className="bg-white text-black p-6 rounded-xl mt-5">
               <div className="flex justify-between mb-5 flex-wrap gap-3">
-                <div>
-                  <h1 className="text-blue-600 text-2xl font-extrabold">FATURA</h1>
-                  <p><b>Empresa:</b> KAMUENGO LDA</p>
+                <div className="flex items-center gap-3">
+                  <img src={logoUrl} alt="KAMUENGO LDA" className="w-16 h-16 object-contain" />
+                  <div>
+                    <h1 className="text-blue-600 text-2xl font-extrabold">FATURA</h1>
+                    <p><b>Empresa:</b> KAMUENGO LDA</p>
+                  </div>
                 </div>
                 <div className="text-right">
                   <p><b>Código:</b> {selecionada.codigo}</p>
@@ -413,19 +416,22 @@ function Sistema() {
             className="bg-white text-black p-6 rounded-xl"
           >
             <div className="flex justify-between mb-5 flex-wrap gap-3">
-              <div>
-                <h1 className="text-blue-600 text-2xl font-extrabold">
-                  FATURA
-                </h1>
-                <p>
-                  <b>Empresa:</b> KAMUENGO LDA
-                </p>
-                <p>
-                  <b>Contactos:</b> +244 900 000 000
-                </p>
-                <p>
-                  <b>Sobre:</b> Sistema Profissional de Venda
-                </p>
+              <div className="flex items-start gap-3">
+                <img src={logoUrl} alt="KAMUENGO LDA" className="w-20 h-20 object-contain" />
+                <div>
+                  <h1 className="text-blue-600 text-2xl font-extrabold">
+                    FATURA
+                  </h1>
+                  <p>
+                    <b>Empresa:</b> KAMUENGO LDA
+                  </p>
+                  <p>
+                    <b>Contactos:</b> +244 900 000 000
+                  </p>
+                  <p>
+                    <b>Sobre:</b> Sistema Profissional de Venda
+                  </p>
+                </div>
               </div>
               <div className="text-right">
                 <p>
