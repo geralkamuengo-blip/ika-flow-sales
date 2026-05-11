@@ -10,6 +10,9 @@ type Item = { designacao: string; preco: number; qtd: number };
 type Fatura = {
   codigo: string;
   data: string;
+  nome: string;
+  localidade: string;
+  servico: string;
   pagamento: string;
   items: Item[];
   maoObra: number;
@@ -17,8 +20,8 @@ type Fatura = {
   total: number;
 };
 
-const ACCESS_USER = "admin";
-const ACCESS_PASS = "ikasu";
+const ACCESS_USER = "";
+const ACCESS_PASS = "";
 
 function Login({ onLogin }: { onLogin: () => void }) {
   const [user, setUser] = useState("");
@@ -30,7 +33,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         onSubmit={(e) => {
           e.preventDefault();
           if (user === ACCESS_USER && pass === ACCESS_PASS) onLogin();
-          else setErr("Credenciais inválidas (admin / ikasu)");
+          else setErr("Dados inseridos não estão corretos (antonio / Angelino1");
         }}
         className="w-[350px] bg-blue-800 p-10 rounded-3xl text-center shadow-2xl"
       >
@@ -78,7 +81,7 @@ function Sistema() {
   const [codigo, setCodigo] = useState(() => {
     const prev = JSON.parse(
       (typeof localStorage !== "undefined" &&
-        localStorage.getItem("ikasu_faturas")) ||
+        localStorage.getItem("inválidas_faturas")) ||
         "[]",
     );
     return proximoCodigo(prev.length + 1);
