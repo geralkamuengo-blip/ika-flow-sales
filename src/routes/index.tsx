@@ -98,7 +98,9 @@ function Sistema() {
   };
 
   const guardarPDF = async () => {
-    const jsPDF = (window as unknown as { jspdf?: { jsPDF: unknown } }).jspdf?.jsPDF;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    const jsPDF = w.jspdf?.jsPDF;
     if (!jsPDF) {
       // load on demand
       await new Promise<void>((res, rej) => {
@@ -110,8 +112,9 @@ function Sistema() {
         document.body.appendChild(s);
       });
     }
-    const JSPDF = (window as unknown as { jspdf: { jsPDF: new () => unknown } }).jspdf.jsPDF;
-    const doc = new JSPDF();
+    const JSPDF = w.jspdf.jsPDF;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const doc: any = new JSPDF();
     let y = 15;
     doc.setFontSize(18);
     doc.setTextColor(37, 99, 235);
