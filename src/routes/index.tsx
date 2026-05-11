@@ -426,7 +426,7 @@ function Sistema() {
                     <b>Empresa:</b> KAMUENGO LDA
                   </p>
                   <p>
-                    <b>Contactos:</b> +244 900 000 000
+                    <b>Contactos:</b> +244 946 785 479 / +244 955 541 908
                   </p>
                   <p>
                     <b>Sobre:</b> Sistema Profissional de Venda
