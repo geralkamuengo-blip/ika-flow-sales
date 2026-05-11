@@ -6,6 +6,15 @@ export const Route = createFileRoute("/")({
 });
 
 type Item = { designacao: string; preco: number; qtd: number };
+type Fatura = {
+  codigo: string;
+  data: string;
+  pagamento: string;
+  items: Item[];
+  maoObra: number;
+  transporte: number;
+  total: number;
+};
 
 const ACCESS_USER = "admin";
 const ACCESS_PASS = "ikasu";
@@ -51,6 +60,9 @@ function Login({ onLogin }: { onLogin: () => void }) {
 }
 
 function Sistema() {
+  const [view, setView] = useState<"fatura" | "lista">("fatura");
+  const [faturas, setFaturas] = useState<Fatura[]>([]);
+  const [selecionada, setSelecionada] = useState<Fatura | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [designacao, setDesignacao] = useState("");
   const [preco, setPreco] = useState<number | "">("");
@@ -173,6 +185,15 @@ function Sistema() {
     alert("Fatura guardada com sucesso!");
   };
 
+  const abrirLista = () => {
+    const prev: Fatura[] = JSON.parse(
+      localStorage.getItem("ikasu_faturas") || "[]",
+    );
+    setFaturas(prev);
+    setSelecionada(null);
+    setView("lista");
+  };
+
   return (
     <div className="min-h-screen p-5 bg-slate-900 text-white">
       <header className="flex items-center justify-between bg-slate-950 p-5 rounded-2xl mb-5 flex-wrap gap-3">
@@ -187,9 +208,94 @@ function Sistema() {
             </p>
           </div>
         </div>
-        <p className="text-slate-300">Data: {hoje}</p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => (view === "fatura" ? abrirLista() : setView("fatura"))}
+            className="px-4 py-2 rounded-lg bg-yellow-400 text-black font-bold"
+          >
+            {view === "fatura" ? "Ver Faturas" : "Nova Fatura"}
+          </button>
+          <p className="text-slate-300">Data: {hoje}</p>
+        </div>
       </header>
 
+      {view === "lista" ? (
+        <section className="bg-slate-800 p-5 rounded-2xl">
+          <h3 className="text-yellow-400 font-bold mb-3">Faturas Guardadas</h3>
+          {faturas.length === 0 ? (
+            <p className="text-slate-400">Nenhuma fatura guardada.</p>
+          ) : (
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
+                  <th className="bg-slate-700 p-2 text-left">Código</th>
+                  <th className="bg-slate-700 p-2 text-left">Data</th>
+                  <th className="bg-slate-700 p-2 text-right">Total</th>
+                  <th className="bg-slate-700 p-2">—</th>
+                </tr>
+              </thead>
+              <tbody>
+                {faturas.map((f, i) => (
+                  <tr key={i} className="border-b border-slate-700">
+                    <td className="p-2">{f.codigo}</td>
+                    <td className="p-2">{f.data}</td>
+                    <td className="p-2 text-right">{fmt(f.total)}</td>
+                    <td className="p-2 text-center">
+                      <button
+                        onClick={() => setSelecionada(f)}
+                        className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 font-bold"
+                      >
+                        Abrir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {selecionada && (
+            <div className="bg-white text-black p-6 rounded-xl mt-5">
+              <div className="flex justify-between mb-5 flex-wrap gap-3">
+                <div>
+                  <h1 className="text-blue-600 text-2xl font-extrabold">FATURA</h1>
+                  <p><b>Empresa:</b> IKA SU</p>
+                </div>
+                <div className="text-right">
+                  <p><b>Código:</b> {selecionada.codigo}</p>
+                  <p><b>Data:</b> {selecionada.data}</p>
+                  <p><b>Pagamento:</b> {selecionada.pagamento}</p>
+                </div>
+              </div>
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="border p-2 bg-slate-100">Designação</th>
+                    <th className="border p-2 bg-slate-100">Qtd</th>
+                    <th className="border p-2 bg-slate-100">Preço</th>
+                    <th className="border p-2 bg-slate-100">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selecionada.items.map((it, i) => (
+                    <tr key={i}>
+                      <td className="border p-2">{it.designacao}</td>
+                      <td className="border p-2 text-center">{it.qtd}</td>
+                      <td className="border p-2 text-right">{fmt(it.preco)}</td>
+                      <td className="border p-2 text-right">{fmt(it.preco * it.qtd)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="text-right mt-4 space-y-1">
+                <p><b>Mão de Obra:</b> {fmt(selecionada.maoObra)}</p>
+                <p><b>Transporte:</b> {fmt(selecionada.transporte)}</p>
+                <p className="text-lg font-bold text-blue-700">Total: {fmt(selecionada.total)}</p>
+              </div>
+            </div>
+          )}
+        </section>
+      ) : (
       <div className="grid md:grid-cols-2 gap-5">
         <section className="bg-slate-800 p-5 rounded-2xl">
           <h3 className="text-yellow-400 font-bold mb-3">
@@ -395,6 +501,7 @@ function Sistema() {
           </div>
         </section>
       </div>
+      )}
 
       <footer className="text-center text-slate-400 mt-8">
         Desenvolvido para IKA SU © 2026
