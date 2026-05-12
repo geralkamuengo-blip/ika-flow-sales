@@ -10,6 +10,7 @@ type Item = { designacao: string; preco: number; qtd: number };
 type Fatura = {
   codigo: string;
   data: string;
+  Hora: string;
   nome: string;
   localidade: string;
   nif: string;
@@ -42,7 +43,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         onSubmit={(e) => {
           e.preventDefault();
           if (user === ACCESS_USER && pass === ACCESS_PASS) onLogin();
-          else setErr("Dados inseridos não estão corretos (antonio / Angelino1)");
+          else setErr("Dados inseridos não estão corretos!");
         }}
         className="relative w-[350px] bg-gradient-to-br from-blue-700/90 to-blue-900/90 backdrop-blur p-10 rounded-3xl text-center shadow-2xl"
       >
@@ -81,7 +82,7 @@ function Sistema() {
   const [items, setItems] = useState<Item[]>([]);
   const [designacao, setDesignacao] = useState("");
   const [preco, setPreco] = useState<number | "">("");
-  const [qtd, setQtd] = useState<number | "">(1);
+  const [qtd, setQtd] = useState<number | "">(0);
   const [pagamento, setPagamento] = useState("Dinheiro");
   const [maoObra, setMaoObra] = useState<number | "">(0);
   const [transporte, setTransporte] = useState<number | "">(0);
@@ -102,6 +103,8 @@ function Sistema() {
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   const hoje = new Date().toLocaleDateString("pt-PT");
+
+  const hoje = new Hour().toLocaleHourString("pt-PT");
 
   const totalBruto = useMemo(
     () => items.reduce((s, i) => s + i.preco * i.qtd, 0),
@@ -193,6 +196,8 @@ function Sistema() {
     doc.text(`Código: ${codigo}`, 14, y);
     doc.text(`Data: ${hoje}`, 140, y);
     y += 6;
+    doc.text(`Hora: ${hoje}`, 140, y);
+    y += 6;
     doc.text(`Pagamento: ${pagamento}`, 14, y);
     y += 6;
     doc.text(`Nome: ${nome}`, 14, y);
@@ -233,6 +238,7 @@ function Sistema() {
     const dados = {
       codigo,
       data: hoje,
+      hora: hoje,
       nome,
       localidade,
       nif,
@@ -283,6 +289,8 @@ function Sistema() {
             {view === "fatura" ? "Ver Faturas" : "Nova Fatura"}
           </button>
           <p className="text-slate-300">Data: {hoje}</p>
+        </div> 
+          <p className="text-slate-300">Hora: {hoje}</p>
         </div>
       </header>
 
@@ -297,6 +305,7 @@ function Sistema() {
                 <tr>
                   <th className="bg-slate-700 p-2 text-left">Código</th>
                   <th className="bg-slate-700 p-2 text-left">Data</th>
+                  <th className="bg-slate-700 p-2 text-left">Hora</th> 
                   <th className="bg-slate-700 p-2 text-right">Total</th>
                   <th className="bg-slate-700 p-2">—</th>
                 </tr>
@@ -306,6 +315,7 @@ function Sistema() {
                   <tr key={i} className="border-b border-slate-700">
                     <td className="p-2">{f.codigo}</td>
                     <td className="p-2">{f.data}</td>
+                    <td className="p-2">{f.hora}</td> 
                     <td className="p-2 text-right">{fmt(f.total)}</td>
                     <td className="p-2 text-center">
                       <button
@@ -313,6 +323,10 @@ function Sistema() {
                         className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 font-bold"
                       >
                         Abrir
+                      </button>
+                        Imprimir
+                      </button>
+                        Guardar PDF
                       </button>
                     </td>
                   </tr>
@@ -339,6 +353,7 @@ function Sistema() {
                 <div className="text-right">
                   <p><b>Código:</b> {selecionada.codigo}</p>
                   <p><b>Data:</b> {selecionada.data}</p>
+                  <p><b>Hora:</b> {selecionada.hora}</p> 
                   <p><b>Pagamento:</b> {selecionada.pagamento}</p>
                 </div>
               </div>
@@ -521,7 +536,7 @@ function Sistema() {
                     <b>Contactos:</b> +244 946 785 479 / +244 955 541 908
                   </p>
                   <p>
-                    <b>Sobre:</b> Sistema Profissional de Venda
+                    <b>Tipo:</b> Versão Profissional de Venda
                   </p>
                   <p>
                     <b>Nome:</b> {nome}
@@ -549,6 +564,9 @@ function Sistema() {
                 <p>
                   <b>Data:</b> {hoje}
                 </p>
+                <p>
+                  <b>Hora:</b> {hoje}
+                </p> 
                 <p>
                   <b>Pagamento:</b> {pagamento}
                 </p>
@@ -619,7 +637,7 @@ function Sistema() {
       )}
 
       <footer className="text-center text-slate-400 mt-8">
-        Desenvolvido para KAMUENGO LDA © 2026
+        Desenvolvido por KAMUENGO LDA © 2026
       </footer>
     </div>
   );
