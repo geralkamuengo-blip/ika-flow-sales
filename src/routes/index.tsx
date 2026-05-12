@@ -528,6 +528,9 @@ function Sistema() {
                   <p>
                     <b>NIF Cliente:</b> {nif}
                   </p>
+                  <p>
+                    <b>Serviço:</b> {servico}
+                  </p>
                 </div>
               </div>
               <div className="text-right">
