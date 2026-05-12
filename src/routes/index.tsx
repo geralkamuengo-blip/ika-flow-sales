@@ -235,6 +235,7 @@ function Sistema() {
       localidade,
       nif,
       pagamento,
+      servico,
       items,
       maoObra: Number(maoObra || 0),
       transporte: Number(transporte || 0),
