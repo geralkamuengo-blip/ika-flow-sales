@@ -34,7 +34,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         onSubmit={(e) => {
           e.preventDefault();
           if (user === ACCESS_USER && pass === ACCESS_PASS) onLogin();
-          else setErr("Dados inseridos não estão corretos (antonio / Angelino1)";
+          else setErr("Dados inseridos não estão corretos (antonio / Angelino1)");
         }}
         className="w-[350px] bg-blue-800 p-10 rounded-3xl text-center shadow-2xl"
       >
