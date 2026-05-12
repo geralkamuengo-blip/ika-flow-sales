@@ -392,6 +392,12 @@ function Sistema() {
           />
           <input
             className="w-full p-3 mt-2 rounded-lg text-black"
+            placeholder="Serviço"
+            value={servico}
+            onChange={(e) => setServico(e.target.value)}
+          />
+          <input
+            className="w-full p-3 mt-2 rounded-lg text-black"
             placeholder="Designação"
             value={designacao}
             onChange={(e) => setDesignacao(e.target.value)}
