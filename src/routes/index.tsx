@@ -317,6 +317,10 @@ function Sistema() {
                   <div>
                     <h1 className="text-blue-600 text-2xl font-extrabold">FATURA</h1>
                     <p><b>Empresa:</b> KAMUENGO LDA</p>
+                    <p className="text-blue-600 font-semibold">NIF: 5000990760</p>
+                    <p><b>Nome:</b> {selecionada.nome}</p>
+                    <p><b>Localidade:</b> {selecionada.localidade}</p>
+                    <p><b>NIF Cliente:</b> {selecionada.nif}</p>
                   </div>
                 </div>
                 <div className="text-right">
