@@ -361,6 +361,24 @@ function Sistema() {
           </h3>
           <input
             className="w-full p-3 mt-2 rounded-lg text-black"
+            placeholder="Nome"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+          />
+          <input
+            className="w-full p-3 mt-2 rounded-lg text-black"
+            placeholder="Localidade"
+            value={localidade}
+            onChange={(e) => setLocalidade(e.target.value)}
+          />
+          <input
+            className="w-full p-3 mt-2 rounded-lg text-black"
+            placeholder="NIF"
+            value={nif}
+            onChange={(e) => setNif(e.target.value)}
+          />
+          <input
+            className="w-full p-3 mt-2 rounded-lg text-black"
             placeholder="Designação"
             value={designacao}
             onChange={(e) => setDesignacao(e.target.value)}
@@ -472,6 +490,7 @@ function Sistema() {
                   <h1 className="text-blue-600 text-2xl font-extrabold">
                     FATURA
                   </h1>
+                  <p className="text-blue-600 font-semibold">NIF: 5000990760</p>
                   <p>
                     <b>Empresa:</b> KAMUENGO LDA
                   </p>
@@ -480,6 +499,15 @@ function Sistema() {
                   </p>
                   <p>
                     <b>Sobre:</b> Sistema Profissional de Venda
+                  </p>
+                  <p>
+                    <b>Nome:</b> {nome}
+                  </p>
+                  <p>
+                    <b>Localidade:</b> {localidade}
+                  </p>
+                  <p>
+                    <b>NIF Cliente:</b> {nif}
                   </p>
                 </div>
               </div>
