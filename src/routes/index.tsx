@@ -29,21 +29,29 @@ function Login({ onLogin }: { onLogin: () => void }) {
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-900">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-700 to-blue-900 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center pointer-events-none"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80')",
+          opacity: 0.15,
+        }}
+      />
       <form
         onSubmit={(e) => {
           e.preventDefault();
           if (user === ACCESS_USER && pass === ACCESS_PASS) onLogin();
           else setErr("Dados inseridos não estão corretos (antonio / Angelino1)");
         }}
-        className="w-[350px] bg-blue-800 p-10 rounded-3xl text-center shadow-2xl"
+        className="relative w-[350px] bg-gradient-to-br from-blue-700/90 to-blue-900/90 backdrop-blur p-10 rounded-3xl text-center shadow-2xl"
       >
         <img
           src={logoUrl}
           alt="KAMUENGO LDA"
           className="w-28 h-28 mx-auto mb-5 rounded-full bg-white object-contain p-2"
         />
-        <h2 className="text-white text-xl font-bold mb-6">MEMBER LOGIN</h2>
+        <h2 className="text-white text-xl font-bold mb-6">KAMUENGO LDA</h2>
         <input
           className="w-full p-3 my-2 rounded-lg text-black"
           placeholder="Utilizador"
@@ -80,6 +88,7 @@ function Sistema() {
   const [nome, setNome] = useState("");
   const [localidade, setLocalidade] = useState("");
   const [nif, setNif] = useState("");
+  const [servico, setServico] = useState("");
   const proximoCodigo = (n: number) =>
     String(Math.min(n, 1000)).padStart(4, "0");
   const [codigo, setCodigo] = useState(() => {
@@ -192,6 +201,8 @@ function Sistema() {
     y += 6;
     doc.text(`NIF: ${nif}`, 14, y);
     y += 10;
+    doc.text(`Serviço: ${servico}`, 14, y);
+    y += 8;
     doc.text("Designação", 14, y);
     doc.text("Qtd", 100, y);
     doc.text("Preço", 120, y);
@@ -226,6 +237,7 @@ function Sistema() {
       localidade,
       nif,
       pagamento,
+      servico,
       items,
       maoObra: Number(maoObra || 0),
       transporte: Number(transporte || 0),
@@ -321,6 +333,7 @@ function Sistema() {
                     <p><b>Nome:</b> {selecionada.nome}</p>
                     <p><b>Localidade:</b> {selecionada.localidade}</p>
                     <p><b>NIF Cliente:</b> {selecionada.nif}</p>
+                    <p><b>Serviço:</b> {selecionada.servico}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -380,6 +393,12 @@ function Sistema() {
             placeholder="NIF"
             value={nif}
             onChange={(e) => setNif(e.target.value)}
+          />
+          <input
+            className="w-full p-3 mt-2 rounded-lg text-black"
+            placeholder="Serviço"
+            value={servico}
+            onChange={(e) => setServico(e.target.value)}
           />
           <input
             className="w-full p-3 mt-2 rounded-lg text-black"
@@ -512,6 +531,9 @@ function Sistema() {
                   </p>
                   <p>
                     <b>NIF Cliente:</b> {nif}
+                  </p>
+                  <p>
+                    <b>Serviço:</b> {servico}
                   </p>
                 </div>
               </div>
