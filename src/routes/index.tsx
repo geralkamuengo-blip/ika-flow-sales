@@ -54,13 +54,13 @@ function Login({ onLogin }: { onLogin: () => void }) {
         />
         <h2 className="text-white text-xl font-bold mb-6">KAMUENGO LDA</h2>
         <input
-          className="w-full p-3 my-2 rounded-lg text-black"
+          className="w-full p-3 my-2 rounded-lg text-white" 
           placeholder="Utilizador"
           value={user}
           onChange={(e) => setUser(e.target.value)}
         />
         <input
-          className="w-full p-3 my-2 rounded-lg text-black"
+          className="w-full p-3 my-2 rounded-lg text-white" 
           type="password"
           placeholder="Senha"
           value={pass}
