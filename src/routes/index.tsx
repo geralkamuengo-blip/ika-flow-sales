@@ -88,6 +88,7 @@ function Sistema() {
   const [nome, setNome] = useState("");
   const [localidade, setLocalidade] = useState("");
   const [nif, setNif] = useState("");
+  const [servico, setServico] = useState("");
   const proximoCodigo = (n: number) =>
     String(Math.min(n, 1000)).padStart(4, "0");
   const [codigo, setCodigo] = useState(() => {
