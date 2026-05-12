@@ -29,21 +29,29 @@ function Login({ onLogin }: { onLogin: () => void }) {
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-900">
+    <div className="relative min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-700 to-blue-900 overflow-hidden">
+      <div
+        className="absolute inset-0 bg-cover bg-center pointer-events-none"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1600&q=80')",
+          opacity: 0.15,
+        }}
+      />
       <form
         onSubmit={(e) => {
           e.preventDefault();
           if (user === ACCESS_USER && pass === ACCESS_PASS) onLogin();
           else setErr("Dados inseridos não estão corretos (antonio / Angelino1)");
         }}
-        className="w-[350px] bg-blue-800 p-10 rounded-3xl text-center shadow-2xl"
+        className="relative w-[350px] bg-gradient-to-br from-blue-700/90 to-blue-900/90 backdrop-blur p-10 rounded-3xl text-center shadow-2xl"
       >
         <img
           src={logoUrl}
           alt="KAMUENGO LDA"
           className="w-28 h-28 mx-auto mb-5 rounded-full bg-white object-contain p-2"
         />
-        <h2 className="text-white text-xl font-bold mb-6">MEMBER LOGIN</h2>
+        <h2 className="text-white text-xl font-bold mb-6">KAMUENGO LDA</h2>
         <input
           className="w-full p-3 my-2 rounded-lg text-black"
           placeholder="Utilizador"
