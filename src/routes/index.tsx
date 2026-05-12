@@ -201,6 +201,8 @@ function Sistema() {
     y += 6;
     doc.text(`NIF: ${nif}`, 14, y);
     y += 10;
+    doc.text(`Serviço: ${servico}`, 14, y);
+    y += 8;
     doc.text("Designação", 14, y);
     doc.text("Qtd", 100, y);
     doc.text("Preço", 120, y);
@@ -331,6 +333,7 @@ function Sistema() {
                     <p><b>Nome:</b> {selecionada.nome}</p>
                     <p><b>Localidade:</b> {selecionada.localidade}</p>
                     <p><b>NIF Cliente:</b> {selecionada.nif}</p>
+                    <p><b>Serviço:</b> {selecionada.servico}</p>
                   </div>
                 </div>
                 <div className="text-right">
