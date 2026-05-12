@@ -12,6 +12,7 @@ type Fatura = {
   data: string;
   nome: string;
   localidade: string;
+  nif: string;
   servico: string;
   pagamento: string;
   items: Item[];
@@ -76,6 +77,9 @@ function Sistema() {
   const [pagamento, setPagamento] = useState("Dinheiro");
   const [maoObra, setMaoObra] = useState<number | "">(0);
   const [transporte, setTransporte] = useState<number | "">(0);
+  const [nome, setNome] = useState("");
+  const [localidade, setLocalidade] = useState("");
+  const [nif, setNif] = useState("");
   const proximoCodigo = (n: number) =>
     String(Math.min(n, 1000)).padStart(4, "0");
   const [codigo, setCodigo] = useState(() => {
@@ -170,6 +174,10 @@ function Sistema() {
     doc.setFontSize(18);
     doc.setTextColor(37, 99, 235);
     doc.text("FATURA - KAMUENGO LDA", 50, y);
+    y += 7;
+    doc.setFontSize(11);
+    doc.setTextColor(37, 99, 235);
+    doc.text("NIF: 5000990760", 50, y);
     y = 45;
     doc.setFontSize(11);
     doc.setTextColor(0);
@@ -177,6 +185,12 @@ function Sistema() {
     doc.text(`Data: ${hoje}`, 140, y);
     y += 6;
     doc.text(`Pagamento: ${pagamento}`, 14, y);
+    y += 6;
+    doc.text(`Nome: ${nome}`, 14, y);
+    y += 6;
+    doc.text(`Localidade: ${localidade}`, 14, y);
+    y += 6;
+    doc.text(`NIF: ${nif}`, 14, y);
     y += 10;
     doc.text("Designação", 14, y);
     doc.text("Qtd", 100, y);
@@ -208,6 +222,9 @@ function Sistema() {
     const dados = {
       codigo,
       data: hoje,
+      nome,
+      localidade,
+      nif,
       pagamento,
       items,
       maoObra: Number(maoObra || 0),
