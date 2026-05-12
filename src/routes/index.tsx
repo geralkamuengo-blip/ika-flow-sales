@@ -118,6 +118,7 @@ function Sistema() {
       table{width:100%;border-collapse:collapse;margin-top:15px}
       th,td{border:1px solid #333;padding:8px;text-align:center}
       h1{color:#2563eb}.right{text-align:right}
+      img{width:3cm;height:3cm;object-fit:contain}
       </style></head><body>${invoiceRef.current.innerHTML}</body></html>`,
     );
     w.document.close();
@@ -142,11 +143,34 @@ function Sistema() {
     const JSPDF = w.jspdf.jsPDF;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const doc: any = new JSPDF();
-    let y = 15;
+    // Carregar logotipo e converter para dataURL
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = logoUrl;
+      await new Promise<void>((res) => {
+        if (img.complete) return res();
+        img.onload = () => res();
+        img.onerror = () => res();
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth || 300;
+      canvas.height = img.naturalHeight || 300;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.92);
+        // 3cm x 3cm (unidade padrão jsPDF: mm)
+        doc.addImage(dataUrl, "JPEG", 14, 10, 30, 30);
+      }
+    } catch {
+      /* ignora se falhar */
+    }
+    let y = 20;
     doc.setFontSize(18);
     doc.setTextColor(37, 99, 235);
-    doc.text("FATURA - KAMUENGO LDA", 14, y);
-    y += 10;
+    doc.text("FATURA - KAMUENGO LDA", 50, y);
+    y = 45;
     doc.setFontSize(11);
     doc.setTextColor(0);
     doc.text(`Código: ${codigo}`, 14, y);
