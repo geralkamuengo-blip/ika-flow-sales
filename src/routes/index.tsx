@@ -12,6 +12,7 @@ type Fatura = {
   data: string;
   nome: string;
   localidade: string;
+  nif: string;
   servico: string;
   pagamento: string;
   items: Item[];
@@ -33,7 +34,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         onSubmit={(e) => {
           e.preventDefault();
           if (user === ACCESS_USER && pass === ACCESS_PASS) onLogin();
-          else setErr("Dados inseridos não estão corretos (antonio / Angelino1)";
+          else setErr("Dados inseridos não estão corretos (antonio / Angelino1)");
         }}
         className="w-[350px] bg-blue-800 p-10 rounded-3xl text-center shadow-2xl"
       >
@@ -76,6 +77,9 @@ function Sistema() {
   const [pagamento, setPagamento] = useState("Dinheiro");
   const [maoObra, setMaoObra] = useState<number | "">(0);
   const [transporte, setTransporte] = useState<number | "">(0);
+  const [nome, setNome] = useState("");
+  const [localidade, setLocalidade] = useState("");
+  const [nif, setNif] = useState("");
   const proximoCodigo = (n: number) =>
     String(Math.min(n, 1000)).padStart(4, "0");
   const [codigo, setCodigo] = useState(() => {
@@ -170,6 +174,10 @@ function Sistema() {
     doc.setFontSize(18);
     doc.setTextColor(37, 99, 235);
     doc.text("FATURA - KAMUENGO LDA", 50, y);
+    y += 7;
+    doc.setFontSize(11);
+    doc.setTextColor(37, 99, 235);
+    doc.text("NIF: 5000990760", 50, y);
     y = 45;
     doc.setFontSize(11);
     doc.setTextColor(0);
@@ -177,6 +185,12 @@ function Sistema() {
     doc.text(`Data: ${hoje}`, 140, y);
     y += 6;
     doc.text(`Pagamento: ${pagamento}`, 14, y);
+    y += 6;
+    doc.text(`Nome: ${nome}`, 14, y);
+    y += 6;
+    doc.text(`Localidade: ${localidade}`, 14, y);
+    y += 6;
+    doc.text(`NIF: ${nif}`, 14, y);
     y += 10;
     doc.text("Designação", 14, y);
     doc.text("Qtd", 100, y);
@@ -208,6 +222,9 @@ function Sistema() {
     const dados = {
       codigo,
       data: hoje,
+      nome,
+      localidade,
+      nif,
       pagamento,
       items,
       maoObra: Number(maoObra || 0),
@@ -300,6 +317,10 @@ function Sistema() {
                   <div>
                     <h1 className="text-blue-600 text-2xl font-extrabold">FATURA</h1>
                     <p><b>Empresa:</b> KAMUENGO LDA</p>
+                    <p className="text-blue-600 font-semibold">NIF: 5000990760</p>
+                    <p><b>Nome:</b> {selecionada.nome}</p>
+                    <p><b>Localidade:</b> {selecionada.localidade}</p>
+                    <p><b>NIF Cliente:</b> {selecionada.nif}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -342,6 +363,24 @@ function Sistema() {
           <h3 className="text-yellow-400 font-bold mb-3">
             Cadastro de Produtos e Serviços
           </h3>
+          <input
+            className="w-full p-3 mt-2 rounded-lg text-black"
+            placeholder="Nome"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+          />
+          <input
+            className="w-full p-3 mt-2 rounded-lg text-black"
+            placeholder="Localidade"
+            value={localidade}
+            onChange={(e) => setLocalidade(e.target.value)}
+          />
+          <input
+            className="w-full p-3 mt-2 rounded-lg text-black"
+            placeholder="NIF"
+            value={nif}
+            onChange={(e) => setNif(e.target.value)}
+          />
           <input
             className="w-full p-3 mt-2 rounded-lg text-black"
             placeholder="Designação"
@@ -455,6 +494,7 @@ function Sistema() {
                   <h1 className="text-blue-600 text-2xl font-extrabold">
                     FATURA
                   </h1>
+                  <p className="text-blue-600 font-semibold">NIF: 5000990760</p>
                   <p>
                     <b>Empresa:</b> KAMUENGO LDA
                   </p>
@@ -463,6 +503,15 @@ function Sistema() {
                   </p>
                   <p>
                     <b>Sobre:</b> Sistema Profissional de Venda
+                  </p>
+                  <p>
+                    <b>Nome:</b> {nome}
+                  </p>
+                  <p>
+                    <b>Localidade:</b> {localidade}
+                  </p>
+                  <p>
+                    <b>NIF Cliente:</b> {nif}
                   </p>
                 </div>
               </div>
