@@ -441,6 +441,47 @@ function Sistema() {
             value={servico}
             onChange={(e) => setServico(e.target.value)}
           />
+          <div className="relative mt-2">
+            <input
+              className="w-full p-3 rounded-lg text-black"
+              placeholder="Código de barras / pesquisar produto (1000 itens)"
+              value={codigoBarra}
+              onChange={(e) => onCodigoBarraChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const p = buscarProduto(codigoBarra);
+                  if (p) aplicarProduto(p);
+                }
+              }}
+            />
+            {sugestoes.length > 0 && (
+              <ul className="absolute z-10 left-0 right-0 bg-white text-black rounded-lg mt-1 max-h-64 overflow-auto shadow-xl">
+                {sugestoes.map((p) => (
+                  <li
+                    key={p.codigo}
+                    onClick={() => aplicarProduto(p)}
+                    className="px-3 py-2 hover:bg-slate-100 cursor-pointer text-sm flex justify-between gap-3"
+                  >
+                    <span className="truncate">
+                      <b>{p.codigo}</b> — {p.nome}
+                    </span>
+                    <span className="text-blue-600 whitespace-nowrap">
+                      {p.preco.toLocaleString("pt-PT")} Kz · stock {p.qtd}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {produtoSelecionado && (
+              <p className="text-xs text-slate-300 mt-1">
+                Selecionado: <b>{produtoSelecionado.nome}</b> · stock disponível:{" "}
+                <span className={produtoSelecionado.qtd > 0 ? "text-green-400" : "text-red-400"}>
+                  {produtoSelecionado.qtd}
+                </span>
+              </p>
+            )}
+          </div>
           <input
             className="w-full p-3 mt-2 rounded-lg text-black"
             placeholder="Designação"
