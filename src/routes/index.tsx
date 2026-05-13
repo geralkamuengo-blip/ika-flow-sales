@@ -10,7 +10,7 @@ type Item = { designacao: string; preco: number; qtd: number };
 type Fatura = {
   codigo: string;
   data: string;
-  Hora: string;
+  hora: string;
   nome: string;
   localidade: string;
   nif: string;
@@ -103,8 +103,7 @@ function Sistema() {
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   const hoje = new Date().toLocaleDateString("pt-PT");
-
-  const hoje = new Hour().toLocaleHourString("pt-PT");
+  const hora = new Date().toLocaleTimeString("pt-PT");
 
   const totalBruto = useMemo(
     () => items.reduce((s, i) => s + i.preco * i.qtd, 0),
@@ -196,7 +195,7 @@ function Sistema() {
     doc.text(`Código: ${codigo}`, 14, y);
     doc.text(`Data: ${hoje}`, 140, y);
     y += 6;
-    doc.text(`Hora: ${hoje}`, 140, y);
+    doc.text(`Hora: ${hora}`, 140, y);
     y += 6;
     doc.text(`Pagamento: ${pagamento}`, 14, y);
     y += 6;
@@ -238,7 +237,7 @@ function Sistema() {
     const dados = {
       codigo,
       data: hoje,
-      hora: hoje,
+      hora,
       nome,
       localidade,
       nif,
@@ -289,8 +288,7 @@ function Sistema() {
             {view === "fatura" ? "Ver Faturas" : "Nova Fatura"}
           </button>
           <p className="text-slate-300">Data: {hoje}</p>
-        </div> 
-          <p className="text-slate-300">Hora: {hoje}</p>
+          <p className="text-slate-300">Hora: {hora}</p>
         </div>
       </header>
 
@@ -323,10 +321,6 @@ function Sistema() {
                         className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 font-bold"
                       >
                         Abrir
-                      </button>
-                        Imprimir
-                      </button>
-                        Guardar PDF
                       </button>
                     </td>
                   </tr>
@@ -565,7 +559,7 @@ function Sistema() {
                   <b>Data:</b> {hoje}
                 </p>
                 <p>
-                  <b>Hora:</b> {hoje}
+                  <b>Hora:</b> {hora}
                 </p> 
                 <p>
                   <b>Pagamento:</b> {pagamento}
