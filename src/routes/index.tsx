@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useRef } from "react";
 import logoUrl from "@/assets/logo-kamuengo.jpg";
+import { PRODUTOS, buscarProduto, type Produto } from "@/data/produtos";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -90,6 +91,37 @@ function Sistema() {
   const [localidade, setLocalidade] = useState("");
   const [nif, setNif] = useState("");
   const [servico, setServico] = useState("");
+  const [codigoBarra, setCodigoBarra] = useState("");
+  const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
+  const [sugestoes, setSugestoes] = useState<Produto[]>([]);
+
+  const aplicarProduto = (p: Produto) => {
+    setProdutoSelecionado(p);
+    setCodigoBarra(p.codigo);
+    setDesignacao(p.nome);
+    setPreco(p.preco);
+    setSugestoes([]);
+  };
+
+  const onCodigoBarraChange = (v: string) => {
+    setCodigoBarra(v);
+    if (!v) {
+      setSugestoes([]);
+      setProdutoSelecionado(null);
+      return;
+    }
+    const exato = buscarProduto(v);
+    if (exato && (exato.codigo === v.trim() || exato.nome.toLowerCase() === v.trim().toLowerCase())) {
+      aplicarProduto(exato);
+      return;
+    }
+    const t = v.trim().toLowerCase();
+    setSugestoes(
+      PRODUTOS.filter(
+        (p) => p.codigo.startsWith(t) || p.nome.toLowerCase().includes(t),
+      ).slice(0, 8),
+    );
+  };
   const proximoCodigo = (n: number) =>
     String(Math.min(n, 1000)).padStart(4, "0");
   const [codigo, setCodigo] = useState(() => {
@@ -409,6 +441,47 @@ function Sistema() {
             value={servico}
             onChange={(e) => setServico(e.target.value)}
           />
+          <div className="relative mt-2">
+            <input
+              className="w-full p-3 rounded-lg text-black"
+              placeholder="Código de barras / pesquisar produto (1000 itens)"
+              value={codigoBarra}
+              onChange={(e) => onCodigoBarraChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const p = buscarProduto(codigoBarra);
+                  if (p) aplicarProduto(p);
+                }
+              }}
+            />
+            {sugestoes.length > 0 && (
+              <ul className="absolute z-10 left-0 right-0 bg-white text-black rounded-lg mt-1 max-h-64 overflow-auto shadow-xl">
+                {sugestoes.map((p) => (
+                  <li
+                    key={p.codigo}
+                    onClick={() => aplicarProduto(p)}
+                    className="px-3 py-2 hover:bg-slate-100 cursor-pointer text-sm flex justify-between gap-3"
+                  >
+                    <span className="truncate">
+                      <b>{p.codigo}</b> — {p.nome}
+                    </span>
+                    <span className="text-blue-600 whitespace-nowrap">
+                      {p.preco.toLocaleString("pt-PT")} Kz · stock {p.qtd}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {produtoSelecionado && (
+              <p className="text-xs text-slate-300 mt-1">
+                Selecionado: <b>{produtoSelecionado.nome}</b> · stock disponível:{" "}
+                <span className={produtoSelecionado.qtd > 0 ? "text-green-400" : "text-red-400"}>
+                  {produtoSelecionado.qtd}
+                </span>
+              </p>
+            )}
+          </div>
           <input
             className="w-full p-3 mt-2 rounded-lg text-black"
             placeholder="Designação"
