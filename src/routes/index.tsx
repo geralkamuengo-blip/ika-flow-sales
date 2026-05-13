@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useRef } from "react";
 import logoUrl from "@/assets/logo-kamuengo.jpg";
+import { PRODUTOS, buscarProduto, type Produto } from "@/data/produtos";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -90,6 +91,37 @@ function Sistema() {
   const [localidade, setLocalidade] = useState("");
   const [nif, setNif] = useState("");
   const [servico, setServico] = useState("");
+  const [codigoBarra, setCodigoBarra] = useState("");
+  const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
+  const [sugestoes, setSugestoes] = useState<Produto[]>([]);
+
+  const aplicarProduto = (p: Produto) => {
+    setProdutoSelecionado(p);
+    setCodigoBarra(p.codigo);
+    setDesignacao(p.nome);
+    setPreco(p.preco);
+    setSugestoes([]);
+  };
+
+  const onCodigoBarraChange = (v: string) => {
+    setCodigoBarra(v);
+    if (!v) {
+      setSugestoes([]);
+      setProdutoSelecionado(null);
+      return;
+    }
+    const exato = buscarProduto(v);
+    if (exato && (exato.codigo === v.trim() || exato.nome.toLowerCase() === v.trim().toLowerCase())) {
+      aplicarProduto(exato);
+      return;
+    }
+    const t = v.trim().toLowerCase();
+    setSugestoes(
+      PRODUTOS.filter(
+        (p) => p.codigo.startsWith(t) || p.nome.toLowerCase().includes(t),
+      ).slice(0, 8),
+    );
+  };
   const proximoCodigo = (n: number) =>
     String(Math.min(n, 1000)).padStart(4, "0");
   const [codigo, setCodigo] = useState(() => {
