@@ -461,12 +461,16 @@ function Sistema() {
   };
 
   const proximoCodigo = (n: number) => String(Math.min(n, 9999)).padStart(4, "0");
-  const [codigo, setCodigo] = useState(() => {
-    const prev = JSON.parse(
-      (typeof localStorage !== "undefined" && localStorage.getItem(LS_FATURAS)) || "[]",
-    );
-    return proximoCodigo(prev.length + 1);
-  });
+  const [codigo, setCodigo] = useState("0001");
+
+  const calcularProximoCodigo = async () => {
+    const { count } = await supabase
+      .from("faturas")
+      .select("*", { count: "exact", head: true });
+    setCodigo(proximoCodigo((count ?? 0) + 1));
+  };
+
+  useEffect(() => { calcularProximoCodigo(); }, []);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   const hoje = new Date().toLocaleDateString("pt-PT");
@@ -499,13 +503,27 @@ function Sistema() {
     total,
   });
 
-  const guardar = () => {
+  const guardar = async () => {
     const dados = faturaAtual();
-    const prev = JSON.parse(localStorage.getItem(LS_FATURAS) || "[]");
-    prev.push(dados);
-    localStorage.setItem(LS_FATURAS, JSON.stringify(prev));
-    setCodigo(proximoCodigo(prev.length + 1));
-    alert("Fatura guardada com sucesso!");
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase.from("faturas").insert({
+      codigo: dados.codigo,
+      data: dados.data,
+      hora: dados.hora,
+      nome: dados.nome,
+      localidade: dados.localidade,
+      nif: dados.nif,
+      servico: dados.servico,
+      pagamento: dados.pagamento,
+      items: dados.items,
+      mao_obra: dados.maoObra,
+      transporte: dados.transporte,
+      total: dados.total,
+      criado_por: userData.user?.id ?? null,
+    });
+    if (error) { alert("Erro ao guardar fatura: " + error.message); return; }
+    alert("Fatura guardada na nuvem!");
+    calcularProximoCodigo();
   };
 
   const imprimir = () => {
@@ -524,9 +542,18 @@ function Sistema() {
     w.print();
   };
 
-  const abrirLista = () => {
-    const prev: Fatura[] = JSON.parse(localStorage.getItem(LS_FATURAS) || "[]");
-    setFaturas(prev);
+  const abrirLista = async () => {
+    const { data, error } = await supabase
+      .from("faturas")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) { alert("Erro: " + error.message); return; }
+    setFaturas((data ?? []).map((f) => ({
+      codigo: f.codigo, data: f.data, hora: f.hora, nome: f.nome,
+      localidade: f.localidade, nif: f.nif, servico: f.servico,
+      pagamento: f.pagamento, items: (f.items as unknown as Item[]) ?? [],
+      maoObra: Number(f.mao_obra), transporte: Number(f.transporte), total: Number(f.total),
+    })));
     setSelecionada(null);
     setView("lista");
   };
