@@ -1036,10 +1036,29 @@ function SiteAccessGate({ children }: { children: React.ReactNode }) {
 }
 
 function Index() {
-  const [logged, setLogged] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setReady(true);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
   return (
     <SiteAccessGate>
-      {logged ? <Sistema /> : <Login onLogin={() => setLogged(true)} />}
+      {!ready ? (
+        <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-300">
+          A carregar…
+        </div>
+      ) : session ? (
+        <Sistema />
+      ) : (
+        <Login />
+      )}
     </SiteAccessGate>
   );
 }
