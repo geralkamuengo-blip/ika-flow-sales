@@ -345,10 +345,22 @@ function Sistema() {
       return [];
     }
   });
-  const todosProdutos = useMemo(() => [...extras, ...PRODUTOS], [extras]);
+  const [edits, setEdits] = useState<Record<string, Partial<Produto>>>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_PROD_EDITS) || "{}"); } catch { return {}; }
+  });
+  const [hidden, setHidden] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_PROD_HIDDEN) || "[]"); } catch { return []; }
+  });
+  const todosProdutos = useMemo(() => {
+    const merged = [...extras, ...PRODUTOS]
+      .filter((p) => !hidden.includes(p.codigo))
+      .map((p) => (edits[p.codigo] ? { ...p, ...edits[p.codigo] } : p));
+    return merged;
+  }, [extras, edits, hidden]);
   const [filtroProd, setFiltroProd] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [showNovoProd, setShowNovoProd] = useState(false);
+  const [editProd, setEditProd] = useState<Produto | null>(null);
 
   const produtosFiltrados = useMemo(() => {
     const t = filtroProd.trim().toLowerCase();
@@ -364,6 +376,37 @@ function Sistema() {
     localStorage.setItem(LS_PRODUTOS, JSON.stringify(novosExtras));
     setShowNovoProd(false);
     alert(`Produto "${p.nome}" cadastrado!`);
+  };
+
+  const eliminarProduto = (p: Produto) => {
+    if (!confirm(`Eliminar "${p.nome}"?`)) return;
+    // Se for um produto extra (cadastrado pelo user), remove da lista de extras.
+    const isExtra = extras.some((x) => x.codigo === p.codigo);
+    if (isExtra) {
+      const novos = extras.filter((x) => x.codigo !== p.codigo);
+      setExtras(novos);
+      localStorage.setItem(LS_PRODUTOS, JSON.stringify(novos));
+    } else {
+      const novos = [...hidden, p.codigo];
+      setHidden(novos);
+      localStorage.setItem(LS_PROD_HIDDEN, JSON.stringify(novos));
+    }
+  };
+
+  const alterarProduto = (p: Produto) => setEditProd(p);
+
+  const salvarAlteracao = (p: Produto) => {
+    const isExtra = extras.some((x) => x.codigo === p.codigo);
+    if (isExtra) {
+      const novos = extras.map((x) => (x.codigo === p.codigo ? p : x));
+      setExtras(novos);
+      localStorage.setItem(LS_PRODUTOS, JSON.stringify(novos));
+    } else {
+      const novos = { ...edits, [p.codigo]: { nome: p.nome, preco: p.preco, qtd: p.qtd } };
+      setEdits(novos);
+      localStorage.setItem(LS_PROD_EDITS, JSON.stringify(novos));
+    }
+    setEditProd(null);
   };
 
   // Form de fatura
