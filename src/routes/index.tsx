@@ -892,11 +892,69 @@ function Sistema() {
 
       {showScanner && <ScannerModal onDetected={onScan} onClose={() => setShowScanner(false)} />}
       {showNovoProd && <NovoProdutoModal onClose={() => setShowNovoProd(false)} onSave={salvarNovoProduto} />}
+      {editProd && (
+        <NovoProdutoModal
+          initial={editProd}
+          onClose={() => setEditProd(null)}
+          onSave={salvarAlteracao}
+        />
+      )}
+    </div>
+  );
+}
+
+function SiteAccessGate({ children }: { children: React.ReactNode }) {
+  const [ok, setOk] = useState<boolean>(() => {
+    if (typeof localStorage === "undefined") return false;
+    return localStorage.getItem(LS_SITE_ACCESS) === "1";
+  });
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  if (ok) return <>{children}</>;
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (code.trim().toUpperCase() === SITE_ACCESS_CODE) {
+            localStorage.setItem(LS_SITE_ACCESS, "1");
+            setOk(true);
+          } else {
+            setErr("Código inválido.");
+          }
+        }}
+        className="bg-slate-800/90 backdrop-blur p-6 rounded-2xl w-full max-w-sm border border-blue-500/30 shadow-2xl"
+      >
+        <h2 className="text-yellow-400 font-bold text-xl text-center mb-1">KAMUENGO LDA</h2>
+        <p className="text-slate-300 text-center text-sm mb-4">Acesso restrito ao Website</p>
+        <input
+          autoFocus
+          type="password"
+          placeholder="Código de acesso"
+          value={code}
+          onChange={(e) => { setCode(e.target.value); setErr(""); }}
+          className="w-full p-3 rounded-lg bg-white text-slate-900 placeholder-slate-500"
+        />
+        {err && <p className="text-red-400 text-xs mt-2 text-center">{err}</p>}
+        <button
+          type="submit"
+          className="w-full mt-4 p-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-white"
+        >
+          Entrar
+        </button>
+        <p className="text-[10px] text-slate-500 text-center mt-3">
+          Solicite o código ao administrador.
+        </p>
+      </form>
     </div>
   );
 }
 
 function Index() {
   const [logged, setLogged] = useState(false);
-  return logged ? <Sistema /> : <Login onLogin={() => setLogged(true)} />;
+  return (
+    <SiteAccessGate>
+      {logged ? <Sistema /> : <Login onLogin={() => setLogged(true)} />}
+    </SiteAccessGate>
+  );
 }
