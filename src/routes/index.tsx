@@ -26,7 +26,11 @@ type Fatura = {
 const ACCESS_USER = "antonio";
 const ACCESS_PASS = "Angelino1";
 const LS_PRODUTOS = "kamuengo_produtos_extra";
+const LS_PROD_EDITS = "kamuengo_produtos_edits";
+const LS_PROD_HIDDEN = "kamuengo_produtos_hidden";
 const LS_FATURAS = "ikasu_faturas";
+const LS_SITE_ACCESS = "kamuengo_site_access_ok";
+const SITE_ACCESS_CODE = "KAMUENGO2026";
 
 const fmt = (n: number) => `${n.toLocaleString("pt-PT")} Kz`;
 
@@ -144,14 +148,17 @@ function ScannerModal({
 function NovoProdutoModal({
   onClose,
   onSave,
+  initial,
 }: {
   onClose: () => void;
   onSave: (p: Produto) => void;
+  initial?: Produto;
 }) {
-  const [codigo, setCodigo] = useState("");
-  const [nome, setNome] = useState("");
-  const [preco, setPreco] = useState<number | "">("");
-  const [qtd, setQtd] = useState<number | "">(0);
+  const [codigo, setCodigo] = useState(initial?.codigo ?? "");
+  const [nome, setNome] = useState(initial?.nome ?? "");
+  const [preco, setPreco] = useState<number | "">(initial?.preco ?? "");
+  const [qtd, setQtd] = useState<number | "">(initial?.qtd ?? 0);
+  const isEdit = !!initial;
 
   const submit = () => {
     if (!nome.trim() || !preco) {
@@ -166,13 +173,14 @@ function NovoProdutoModal({
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
       <div className="bg-slate-900 rounded-2xl p-5 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-yellow-400 font-bold">Cadastrar Novo Produto</h3>
+          <h3 className="text-yellow-400 font-bold">{isEdit ? "Alterar Produto" : "Cadastrar Novo Produto"}</h3>
           <button onClick={onClose} className="text-white text-2xl leading-none">×</button>
         </div>
         <input
           className="w-full p-3 my-2 rounded-lg bg-white text-slate-900 placeholder-slate-500"
           placeholder="Código de barras (opcional)"
           value={codigo}
+          disabled={isEdit}
           onChange={(e) => setCodigo(e.target.value)}
         />
         <input
@@ -199,7 +207,7 @@ function NovoProdutoModal({
           onClick={submit}
           className="w-full p-3 mt-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold"
         >
-          Guardar Produto
+          {isEdit ? "Guardar Alterações" : "Guardar Produto"}
         </button>
       </div>
     </div>
@@ -337,10 +345,22 @@ function Sistema() {
       return [];
     }
   });
-  const todosProdutos = useMemo(() => [...extras, ...PRODUTOS], [extras]);
+  const [edits, setEdits] = useState<Record<string, Partial<Produto>>>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_PROD_EDITS) || "{}"); } catch { return {}; }
+  });
+  const [hidden, setHidden] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(LS_PROD_HIDDEN) || "[]"); } catch { return []; }
+  });
+  const todosProdutos = useMemo(() => {
+    const merged = [...extras, ...PRODUTOS]
+      .filter((p) => !hidden.includes(p.codigo))
+      .map((p) => (edits[p.codigo] ? { ...p, ...edits[p.codigo] } : p));
+    return merged;
+  }, [extras, edits, hidden]);
   const [filtroProd, setFiltroProd] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [showNovoProd, setShowNovoProd] = useState(false);
+  const [editProd, setEditProd] = useState<Produto | null>(null);
 
   const produtosFiltrados = useMemo(() => {
     const t = filtroProd.trim().toLowerCase();
@@ -356,6 +376,37 @@ function Sistema() {
     localStorage.setItem(LS_PRODUTOS, JSON.stringify(novosExtras));
     setShowNovoProd(false);
     alert(`Produto "${p.nome}" cadastrado!`);
+  };
+
+  const eliminarProduto = (p: Produto) => {
+    if (!confirm(`Eliminar "${p.nome}"?`)) return;
+    // Se for um produto extra (cadastrado pelo user), remove da lista de extras.
+    const isExtra = extras.some((x) => x.codigo === p.codigo);
+    if (isExtra) {
+      const novos = extras.filter((x) => x.codigo !== p.codigo);
+      setExtras(novos);
+      localStorage.setItem(LS_PRODUTOS, JSON.stringify(novos));
+    } else {
+      const novos = [...hidden, p.codigo];
+      setHidden(novos);
+      localStorage.setItem(LS_PROD_HIDDEN, JSON.stringify(novos));
+    }
+  };
+
+  const alterarProduto = (p: Produto) => setEditProd(p);
+
+  const salvarAlteracao = (p: Produto) => {
+    const isExtra = extras.some((x) => x.codigo === p.codigo);
+    if (isExtra) {
+      const novos = extras.map((x) => (x.codigo === p.codigo ? p : x));
+      setExtras(novos);
+      localStorage.setItem(LS_PRODUTOS, JSON.stringify(novos));
+    } else {
+      const novos = { ...edits, [p.codigo]: { nome: p.nome, preco: p.preco, qtd: p.qtd } };
+      setEdits(novos);
+      localStorage.setItem(LS_PROD_EDITS, JSON.stringify(novos));
+    }
+    setEditProd(null);
   };
 
   // Form de fatura
@@ -630,18 +681,37 @@ function Sistema() {
               {produtosFiltrados.map((p) => (
                 <li
                   key={p.codigo}
-                  onClick={() => aplicarProduto(p)}
-                  className="px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm"
+                  className="px-3 py-2 hover:bg-slate-700 text-sm"
                 >
-                  <div className="flex justify-between gap-2">
+                  <div
+                    onClick={() => aplicarProduto(p)}
+                    className="flex justify-between gap-2 cursor-pointer"
+                  >
                     <span className="truncate font-medium text-white">{p.nome}</span>
                     <span className="text-blue-300 whitespace-nowrap">{fmt(p.preco)}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-slate-400">
+                  <div
+                    onClick={() => aplicarProduto(p)}
+                    className="flex justify-between text-xs text-slate-400 cursor-pointer"
+                  >
                     <span>{p.codigo}</span>
                     <span className={p.qtd > 0 ? "text-green-400" : "text-red-400"}>
                       stock {p.qtd}
                     </span>
+                  </div>
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); alterarProduto(p); }}
+                      className="flex-1 px-2 py-1 text-xs rounded bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold"
+                    >
+                      ✎ Alterar
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); eliminarProduto(p); }}
+                      className="flex-1 px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 font-bold"
+                    >
+                      🗑 Eliminar
+                    </button>
                   </div>
                 </li>
               ))}
@@ -822,11 +892,69 @@ function Sistema() {
 
       {showScanner && <ScannerModal onDetected={onScan} onClose={() => setShowScanner(false)} />}
       {showNovoProd && <NovoProdutoModal onClose={() => setShowNovoProd(false)} onSave={salvarNovoProduto} />}
+      {editProd && (
+        <NovoProdutoModal
+          initial={editProd}
+          onClose={() => setEditProd(null)}
+          onSave={salvarAlteracao}
+        />
+      )}
+    </div>
+  );
+}
+
+function SiteAccessGate({ children }: { children: React.ReactNode }) {
+  const [ok, setOk] = useState<boolean>(() => {
+    if (typeof localStorage === "undefined") return false;
+    return localStorage.getItem(LS_SITE_ACCESS) === "1";
+  });
+  const [code, setCode] = useState("");
+  const [err, setErr] = useState("");
+  if (ok) return <>{children}</>;
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (code.trim().toUpperCase() === SITE_ACCESS_CODE) {
+            localStorage.setItem(LS_SITE_ACCESS, "1");
+            setOk(true);
+          } else {
+            setErr("Código inválido.");
+          }
+        }}
+        className="bg-slate-800/90 backdrop-blur p-6 rounded-2xl w-full max-w-sm border border-blue-500/30 shadow-2xl"
+      >
+        <h2 className="text-yellow-400 font-bold text-xl text-center mb-1">KAMUENGO LDA</h2>
+        <p className="text-slate-300 text-center text-sm mb-4">Acesso restrito ao Website</p>
+        <input
+          autoFocus
+          type="password"
+          placeholder="Código de acesso"
+          value={code}
+          onChange={(e) => { setCode(e.target.value); setErr(""); }}
+          className="w-full p-3 rounded-lg bg-white text-slate-900 placeholder-slate-500"
+        />
+        {err && <p className="text-red-400 text-xs mt-2 text-center">{err}</p>}
+        <button
+          type="submit"
+          className="w-full mt-4 p-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-bold text-white"
+        >
+          Entrar
+        </button>
+        <p className="text-[10px] text-slate-500 text-center mt-3">
+          Solicite o código ao administrador.
+        </p>
+      </form>
     </div>
   );
 }
 
 function Index() {
   const [logged, setLogged] = useState(false);
-  return logged ? <Sistema /> : <Login onLogin={() => setLogged(true)} />;
+  return (
+    <SiteAccessGate>
+      {logged ? <Sistema /> : <Login onLogin={() => setLogged(true)} />}
+    </SiteAccessGate>
+  );
 }
