@@ -769,6 +769,15 @@ function Sistema() {
             <p className="text-xs text-slate-400 mt-2">
               {todosProdutos.length} produtos · mostrando {produtosFiltrados.length}
             </p>
+            {!carregandoProdutos && todosProdutos.length === 0 && (
+              <button
+                onClick={importarCatalogoBase}
+                disabled={importando}
+                className="w-full mt-2 p-2 text-xs rounded bg-purple-600 hover:bg-purple-700 font-bold disabled:opacity-50"
+              >
+                {importando ? "A importar…" : `📥 Importar ${PRODUTOS.length} produtos do catálogo base`}
+              </button>
+            )}
             <ul className="mt-2 max-h-[420px] overflow-y-auto divide-y divide-slate-700 rounded-lg bg-slate-900">
               {produtosFiltrados.map((p) => (
                 <li
