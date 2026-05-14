@@ -14,7 +14,93 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      faturas: {
+        Row: {
+          codigo: string
+          created_at: string
+          criado_por: string | null
+          data: string
+          hora: string
+          id: string
+          items: Json
+          localidade: string
+          mao_obra: number
+          nif: string
+          nome: string
+          pagamento: string
+          servico: string
+          total: number
+          transporte: number
+          updated_at: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          criado_por?: string | null
+          data: string
+          hora: string
+          id?: string
+          items?: Json
+          localidade?: string
+          mao_obra?: number
+          nif?: string
+          nome?: string
+          pagamento?: string
+          servico?: string
+          total?: number
+          transporte?: number
+          updated_at?: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          criado_por?: string | null
+          data?: string
+          hora?: string
+          id?: string
+          items?: Json
+          localidade?: string
+          mao_obra?: number
+          nif?: string
+          nome?: string
+          pagamento?: string
+          servico?: string
+          total?: number
+          transporte?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      produtos: {
+        Row: {
+          codigo: string
+          created_at: string
+          id: string
+          nome: string
+          preco: number
+          qtd: number
+          updated_at: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          id?: string
+          nome: string
+          preco?: number
+          qtd?: number
+          updated_at?: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          preco?: number
+          qtd?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
