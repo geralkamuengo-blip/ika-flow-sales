@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useRef, useEffect } from "react";
 import logoUrl from "@/assets/logo-kamuengo.jpg";
 import { PRODUTOS, type Produto } from "@/data/produtos";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -23,12 +25,6 @@ type Fatura = {
   total: number;
 };
 
-const ACCESS_USER = "antonio";
-const ACCESS_PASS = "Angelino1";
-const LS_PRODUTOS = "kamuengo_produtos_extra";
-const LS_PROD_EDITS = "kamuengo_produtos_edits";
-const LS_PROD_HIDDEN = "kamuengo_produtos_hidden";
-const LS_FATURAS = "ikasu_faturas";
 const LS_SITE_ACCESS = "kamuengo_site_access_ok";
 const SITE_ACCESS_CODE = "KAMUENGO2026";
 
