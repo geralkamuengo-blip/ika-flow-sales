@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo, useRef, useEffect } from "react";
 import logoUrl from "@/assets/logo-kamuengo.jpg";
 import { PRODUTOS, type Produto } from "@/data/produtos";
+import { supabase } from "@/integrations/supabase/client";
+import type { Session } from "@supabase/supabase-js";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -23,22 +25,45 @@ type Fatura = {
   total: number;
 };
 
-const ACCESS_USER = "antonio";
-const ACCESS_PASS = "Angelino1";
-const LS_PRODUTOS = "kamuengo_produtos_extra";
-const LS_PROD_EDITS = "kamuengo_produtos_edits";
-const LS_PROD_HIDDEN = "kamuengo_produtos_hidden";
-const LS_FATURAS = "ikasu_faturas";
 const LS_SITE_ACCESS = "kamuengo_site_access_ok";
 const SITE_ACCESS_CODE = "KAMUENGO2026";
 
 const fmt = (n: number) => `${n.toLocaleString("pt-PT")} Kz`;
 
 // =============== Login ===============
-function Login({ onLogin }: { onLogin: () => void }) {
-  const [user, setUser] = useState("");
+function Login() {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr("");
+    setLoading(true);
+    try {
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password: pass,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        setErr("Conta criada! Verifique o seu email para confirmar e depois entre.");
+        setMode("signin");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-700 to-blue-900 overflow-hidden p-4">
       <div
@@ -50,11 +75,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         }}
       />
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (user === ACCESS_USER && pass === ACCESS_PASS) onLogin();
-          else setErr("Dados inseridos não estão corretos!");
-        }}
+        onSubmit={submit}
         className="relative w-full max-w-sm bg-gradient-to-br from-blue-700/90 to-blue-900/90 backdrop-blur p-8 rounded-3xl text-center shadow-2xl"
       >
         <img
@@ -65,9 +86,11 @@ function Login({ onLogin }: { onLogin: () => void }) {
         <h2 className="text-white text-xl font-bold mb-6">KAMUENGO LDA</h2>
         <input
           className="w-full p-3 my-2 rounded-lg bg-white text-slate-900 placeholder-slate-500"
-          placeholder="Utilizador"
-          value={user}
-          onChange={(e) => setUser(e.target.value)}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
         />
         <input
           className="w-full p-3 my-2 rounded-lg bg-white text-slate-900 placeholder-slate-500"
@@ -75,10 +98,19 @@ function Login({ onLogin }: { onLogin: () => void }) {
           placeholder="Senha"
           value={pass}
           onChange={(e) => setPass(e.target.value)}
+          required
+          minLength={6}
         />
         {err && <p className="text-yellow-300 text-sm mt-2">{err}</p>}
-        <button className="w-full p-3 mt-4 bg-yellow-400 text-black rounded-lg font-bold text-lg">
-          LOGIN
+        <button disabled={loading} className="w-full p-3 mt-4 bg-yellow-400 text-black rounded-lg font-bold text-lg disabled:opacity-50">
+          {loading ? "..." : mode === "signin" ? "ENTRAR" : "CRIAR CONTA"}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setErr(""); }}
+          className="w-full mt-3 text-yellow-200 text-xs underline"
+        >
+          {mode === "signin" ? "Criar nova conta" : "Já tenho conta — entrar"}
         </button>
       </form>
     </div>
@@ -337,26 +369,63 @@ function Sistema() {
   const [faturas, setFaturas] = useState<Fatura[]>([]);
   const [selecionada, setSelecionada] = useState<Fatura | null>(null);
 
-  // Produtos (banco + extras localStorage)
-  const [extras, setExtras] = useState<Produto[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(LS_PRODUTOS) || "[]");
-    } catch {
-      return [];
+  // Produtos — agora vivem na nuvem, partilhados entre dispositivos
+  const [todosProdutos, setTodosProdutos] = useState<Produto[]>([]);
+  const [carregandoProdutos, setCarregandoProdutos] = useState(true);
+  const [importando, setImportando] = useState(false);
+
+  const recarregarProdutos = async () => {
+    setCarregandoProdutos(true);
+    const { data, error } = await supabase
+      .from("produtos")
+      .select("codigo,nome,preco,qtd")
+      .order("nome", { ascending: true });
+    if (error) {
+      console.error("Erro a carregar produtos:", error);
+      alert("Erro a carregar produtos: " + error.message);
+    } else {
+      setTodosProdutos((data ?? []).map((p) => ({
+        codigo: p.codigo,
+        nome: p.nome,
+        preco: Number(p.preco),
+        qtd: p.qtd,
+      })));
     }
-  });
-  const [edits, setEdits] = useState<Record<string, Partial<Produto>>>(() => {
-    try { return JSON.parse(localStorage.getItem(LS_PROD_EDITS) || "{}"); } catch { return {}; }
-  });
-  const [hidden, setHidden] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(LS_PROD_HIDDEN) || "[]"); } catch { return []; }
-  });
-  const todosProdutos = useMemo(() => {
-    const merged = [...extras, ...PRODUTOS]
-      .filter((p) => !hidden.includes(p.codigo))
-      .map((p) => (edits[p.codigo] ? { ...p, ...edits[p.codigo] } : p));
-    return merged;
-  }, [extras, edits, hidden]);
+    setCarregandoProdutos(false);
+  };
+
+  useEffect(() => {
+    recarregarProdutos();
+    // realtime: sincronização entre dispositivos
+    const ch = supabase
+      .channel("produtos-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "produtos" }, () => {
+        recarregarProdutos();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
+  const importarCatalogoBase = async () => {
+    if (!confirm(`Importar ${PRODUTOS.length} produtos do catálogo base para a nuvem?`)) return;
+    setImportando(true);
+    // Lotes de 500
+    const rows = PRODUTOS.map((p) => ({
+      codigo: p.codigo, nome: p.nome, preco: p.preco, qtd: p.qtd,
+    }));
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500);
+      const { error } = await supabase.from("produtos").upsert(chunk, { onConflict: "codigo" });
+      if (error) {
+        alert("Erro na importação: " + error.message);
+        setImportando(false);
+        return;
+      }
+    }
+    setImportando(false);
+    alert("Catálogo importado!");
+    recarregarProdutos();
+  };
   const [filtroProd, setFiltroProd] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [showNovoProd, setShowNovoProd] = useState(false);
@@ -370,43 +439,32 @@ function Sistema() {
       .slice(0, 200);
   }, [todosProdutos, filtroProd]);
 
-  const salvarNovoProduto = (p: Produto) => {
-    const novosExtras = [p, ...extras];
-    setExtras(novosExtras);
-    localStorage.setItem(LS_PRODUTOS, JSON.stringify(novosExtras));
+  const salvarNovoProduto = async (p: Produto) => {
+    const { error } = await supabase.from("produtos").insert({
+      codigo: p.codigo, nome: p.nome, preco: p.preco, qtd: p.qtd,
+    });
+    if (error) { alert("Erro: " + error.message); return; }
     setShowNovoProd(false);
-    alert(`Produto "${p.nome}" cadastrado!`);
+    recarregarProdutos();
   };
 
-  const eliminarProduto = (p: Produto) => {
+  const eliminarProduto = async (p: Produto) => {
     if (!confirm(`Eliminar "${p.nome}"?`)) return;
-    // Se for um produto extra (cadastrado pelo user), remove da lista de extras.
-    const isExtra = extras.some((x) => x.codigo === p.codigo);
-    if (isExtra) {
-      const novos = extras.filter((x) => x.codigo !== p.codigo);
-      setExtras(novos);
-      localStorage.setItem(LS_PRODUTOS, JSON.stringify(novos));
-    } else {
-      const novos = [...hidden, p.codigo];
-      setHidden(novos);
-      localStorage.setItem(LS_PROD_HIDDEN, JSON.stringify(novos));
-    }
+    const { error } = await supabase.from("produtos").delete().eq("codigo", p.codigo);
+    if (error) { alert("Erro: " + error.message); return; }
+    recarregarProdutos();
   };
 
   const alterarProduto = (p: Produto) => setEditProd(p);
 
-  const salvarAlteracao = (p: Produto) => {
-    const isExtra = extras.some((x) => x.codigo === p.codigo);
-    if (isExtra) {
-      const novos = extras.map((x) => (x.codigo === p.codigo ? p : x));
-      setExtras(novos);
-      localStorage.setItem(LS_PRODUTOS, JSON.stringify(novos));
-    } else {
-      const novos = { ...edits, [p.codigo]: { nome: p.nome, preco: p.preco, qtd: p.qtd } };
-      setEdits(novos);
-      localStorage.setItem(LS_PROD_EDITS, JSON.stringify(novos));
-    }
+  const salvarAlteracao = async (p: Produto) => {
+    const { error } = await supabase
+      .from("produtos")
+      .update({ nome: p.nome, preco: p.preco, qtd: p.qtd })
+      .eq("codigo", p.codigo);
+    if (error) { alert("Erro: " + error.message); return; }
     setEditProd(null);
+    recarregarProdutos();
   };
 
   // Form de fatura
@@ -439,12 +497,16 @@ function Sistema() {
   };
 
   const proximoCodigo = (n: number) => String(Math.min(n, 9999)).padStart(4, "0");
-  const [codigo, setCodigo] = useState(() => {
-    const prev = JSON.parse(
-      (typeof localStorage !== "undefined" && localStorage.getItem(LS_FATURAS)) || "[]",
-    );
-    return proximoCodigo(prev.length + 1);
-  });
+  const [codigo, setCodigo] = useState("0001");
+
+  const calcularProximoCodigo = async () => {
+    const { count } = await supabase
+      .from("faturas")
+      .select("*", { count: "exact", head: true });
+    setCodigo(proximoCodigo((count ?? 0) + 1));
+  };
+
+  useEffect(() => { calcularProximoCodigo(); }, []);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   const hoje = new Date().toLocaleDateString("pt-PT");
@@ -477,13 +539,27 @@ function Sistema() {
     total,
   });
 
-  const guardar = () => {
+  const guardar = async () => {
     const dados = faturaAtual();
-    const prev = JSON.parse(localStorage.getItem(LS_FATURAS) || "[]");
-    prev.push(dados);
-    localStorage.setItem(LS_FATURAS, JSON.stringify(prev));
-    setCodigo(proximoCodigo(prev.length + 1));
-    alert("Fatura guardada com sucesso!");
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase.from("faturas").insert({
+      codigo: dados.codigo,
+      data: dados.data,
+      hora: dados.hora,
+      nome: dados.nome,
+      localidade: dados.localidade,
+      nif: dados.nif,
+      servico: dados.servico,
+      pagamento: dados.pagamento,
+      items: dados.items,
+      mao_obra: dados.maoObra,
+      transporte: dados.transporte,
+      total: dados.total,
+      criado_por: userData.user?.id ?? null,
+    });
+    if (error) { alert("Erro ao guardar fatura: " + error.message); return; }
+    alert("Fatura guardada na nuvem!");
+    calcularProximoCodigo();
   };
 
   const imprimir = () => {
@@ -502,9 +578,18 @@ function Sistema() {
     w.print();
   };
 
-  const abrirLista = () => {
-    const prev: Fatura[] = JSON.parse(localStorage.getItem(LS_FATURAS) || "[]");
-    setFaturas(prev);
+  const abrirLista = async () => {
+    const { data, error } = await supabase
+      .from("faturas")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) { alert("Erro: " + error.message); return; }
+    setFaturas((data ?? []).map((f) => ({
+      codigo: f.codigo, data: f.data, hora: f.hora, nome: f.nome,
+      localidade: f.localidade, nif: f.nif, servico: f.servico,
+      pagamento: f.pagamento, items: (f.items as unknown as Item[]) ?? [],
+      maoObra: Number(f.mao_obra), transporte: Number(f.transporte), total: Number(f.total),
+    })));
     setSelecionada(null);
     setView("lista");
   };
@@ -535,6 +620,13 @@ function Sistema() {
             className="px-3 py-2 rounded-lg bg-yellow-400 text-black font-bold"
           >
             {view === "fatura" ? "Ver Faturas" : "Nova Fatura"}
+          </button>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold"
+            title="Terminar sessão"
+          >
+            Sair
           </button>
           <p className="text-slate-300">{hoje}</p>
           <p className="text-slate-300">{hora}</p>
@@ -677,6 +769,15 @@ function Sistema() {
             <p className="text-xs text-slate-400 mt-2">
               {todosProdutos.length} produtos · mostrando {produtosFiltrados.length}
             </p>
+            {!carregandoProdutos && todosProdutos.length === 0 && (
+              <button
+                onClick={importarCatalogoBase}
+                disabled={importando}
+                className="w-full mt-2 p-2 text-xs rounded bg-purple-600 hover:bg-purple-700 font-bold disabled:opacity-50"
+              >
+                {importando ? "A importar…" : `📥 Importar ${PRODUTOS.length} produtos do catálogo base`}
+              </button>
+            )}
             <ul className="mt-2 max-h-[420px] overflow-y-auto divide-y divide-slate-700 rounded-lg bg-slate-900">
               {produtosFiltrados.map((p) => (
                 <li
@@ -951,10 +1052,29 @@ function SiteAccessGate({ children }: { children: React.ReactNode }) {
 }
 
 function Index() {
-  const [logged, setLogged] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setSession(s);
+    });
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setReady(true);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
   return (
     <SiteAccessGate>
-      {logged ? <Sistema /> : <Login onLogin={() => setLogged(true)} />}
+      {!ready ? (
+        <div className="min-h-screen flex items-center justify-center bg-slate-900 text-slate-300">
+          A carregar…
+        </div>
+      ) : session ? (
+        <Sistema />
+      ) : (
+        <Login />
+      )}
     </SiteAccessGate>
   );
 }
