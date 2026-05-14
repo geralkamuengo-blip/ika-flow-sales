@@ -621,6 +621,13 @@ function Sistema() {
           >
             {view === "fatura" ? "Ver Faturas" : "Nova Fatura"}
           </button>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold"
+            title="Terminar sessão"
+          >
+            Sair
+          </button>
           <p className="text-slate-300">{hoje}</p>
           <p className="text-slate-300">{hora}</p>
         </div>
