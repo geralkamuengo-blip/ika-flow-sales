@@ -31,10 +31,39 @@ const SITE_ACCESS_CODE = "KAMUENGO2026";
 const fmt = (n: number) => `${n.toLocaleString("pt-PT")} Kz`;
 
 // =============== Login ===============
-function Login({ onLogin }: { onLogin: () => void }) {
-  const [user, setUser] = useState("");
+function Login() {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr("");
+    setLoading(true);
+    try {
+      if (mode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password: pass,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        setErr("Conta criada! Verifique o seu email para confirmar e depois entre.");
+        setMode("signin");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setErr(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-500 via-blue-700 to-blue-900 overflow-hidden p-4">
       <div
@@ -46,11 +75,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         }}
       />
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (user === ACCESS_USER && pass === ACCESS_PASS) onLogin();
-          else setErr("Dados inseridos não estão corretos!");
-        }}
+        onSubmit={submit}
         className="relative w-full max-w-sm bg-gradient-to-br from-blue-700/90 to-blue-900/90 backdrop-blur p-8 rounded-3xl text-center shadow-2xl"
       >
         <img
@@ -61,9 +86,11 @@ function Login({ onLogin }: { onLogin: () => void }) {
         <h2 className="text-white text-xl font-bold mb-6">KAMUENGO LDA</h2>
         <input
           className="w-full p-3 my-2 rounded-lg bg-white text-slate-900 placeholder-slate-500"
-          placeholder="Utilizador"
-          value={user}
-          onChange={(e) => setUser(e.target.value)}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
         />
         <input
           className="w-full p-3 my-2 rounded-lg bg-white text-slate-900 placeholder-slate-500"
@@ -71,10 +98,19 @@ function Login({ onLogin }: { onLogin: () => void }) {
           placeholder="Senha"
           value={pass}
           onChange={(e) => setPass(e.target.value)}
+          required
+          minLength={6}
         />
         {err && <p className="text-yellow-300 text-sm mt-2">{err}</p>}
-        <button className="w-full p-3 mt-4 bg-yellow-400 text-black rounded-lg font-bold text-lg">
-          LOGIN
+        <button disabled={loading} className="w-full p-3 mt-4 bg-yellow-400 text-black rounded-lg font-bold text-lg disabled:opacity-50">
+          {loading ? "..." : mode === "signin" ? "ENTRAR" : "CRIAR CONTA"}
+        </button>
+        <button
+          type="button"
+          onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setErr(""); }}
+          className="w-full mt-3 text-yellow-200 text-xs underline"
+        >
+          {mode === "signin" ? "Criar nova conta" : "Já tenho conta — entrar"}
         </button>
       </form>
     </div>
