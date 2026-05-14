@@ -26,7 +26,11 @@ type Fatura = {
 const ACCESS_USER = "antonio";
 const ACCESS_PASS = "Angelino1";
 const LS_PRODUTOS = "kamuengo_produtos_extra";
+const LS_PROD_EDITS = "kamuengo_produtos_edits";
+const LS_PROD_HIDDEN = "kamuengo_produtos_hidden";
 const LS_FATURAS = "ikasu_faturas";
+const LS_SITE_ACCESS = "kamuengo_site_access_ok";
+const SITE_ACCESS_CODE = "KAMUENGO2026";
 
 const fmt = (n: number) => `${n.toLocaleString("pt-PT")} Kz`;
 
@@ -144,14 +148,17 @@ function ScannerModal({
 function NovoProdutoModal({
   onClose,
   onSave,
+  initial,
 }: {
   onClose: () => void;
   onSave: (p: Produto) => void;
+  initial?: Produto;
 }) {
-  const [codigo, setCodigo] = useState("");
-  const [nome, setNome] = useState("");
-  const [preco, setPreco] = useState<number | "">("");
-  const [qtd, setQtd] = useState<number | "">(0);
+  const [codigo, setCodigo] = useState(initial?.codigo ?? "");
+  const [nome, setNome] = useState(initial?.nome ?? "");
+  const [preco, setPreco] = useState<number | "">(initial?.preco ?? "");
+  const [qtd, setQtd] = useState<number | "">(initial?.qtd ?? 0);
+  const isEdit = !!initial;
 
   const submit = () => {
     if (!nome.trim() || !preco) {
@@ -166,13 +173,14 @@ function NovoProdutoModal({
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
       <div className="bg-slate-900 rounded-2xl p-5 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-yellow-400 font-bold">Cadastrar Novo Produto</h3>
+          <h3 className="text-yellow-400 font-bold">{isEdit ? "Alterar Produto" : "Cadastrar Novo Produto"}</h3>
           <button onClick={onClose} className="text-white text-2xl leading-none">×</button>
         </div>
         <input
           className="w-full p-3 my-2 rounded-lg bg-white text-slate-900 placeholder-slate-500"
           placeholder="Código de barras (opcional)"
           value={codigo}
+          disabled={isEdit}
           onChange={(e) => setCodigo(e.target.value)}
         />
         <input
@@ -199,7 +207,7 @@ function NovoProdutoModal({
           onClick={submit}
           className="w-full p-3 mt-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-bold"
         >
-          Guardar Produto
+          {isEdit ? "Guardar Alterações" : "Guardar Produto"}
         </button>
       </div>
     </div>
