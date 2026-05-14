@@ -681,18 +681,37 @@ function Sistema() {
               {produtosFiltrados.map((p) => (
                 <li
                   key={p.codigo}
-                  onClick={() => aplicarProduto(p)}
-                  className="px-3 py-2 hover:bg-slate-700 cursor-pointer text-sm"
+                  className="px-3 py-2 hover:bg-slate-700 text-sm"
                 >
-                  <div className="flex justify-between gap-2">
+                  <div
+                    onClick={() => aplicarProduto(p)}
+                    className="flex justify-between gap-2 cursor-pointer"
+                  >
                     <span className="truncate font-medium text-white">{p.nome}</span>
                     <span className="text-blue-300 whitespace-nowrap">{fmt(p.preco)}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-slate-400">
+                  <div
+                    onClick={() => aplicarProduto(p)}
+                    className="flex justify-between text-xs text-slate-400 cursor-pointer"
+                  >
                     <span>{p.codigo}</span>
                     <span className={p.qtd > 0 ? "text-green-400" : "text-red-400"}>
                       stock {p.qtd}
                     </span>
+                  </div>
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); alterarProduto(p); }}
+                      className="flex-1 px-2 py-1 text-xs rounded bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold"
+                    >
+                      ✎ Alterar
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); eliminarProduto(p); }}
+                      className="flex-1 px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 font-bold"
+                    >
+                      🗑 Eliminar
+                    </button>
                   </div>
                 </li>
               ))}
