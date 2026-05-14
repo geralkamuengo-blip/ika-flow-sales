@@ -333,26 +333,63 @@ function Sistema() {
   const [faturas, setFaturas] = useState<Fatura[]>([]);
   const [selecionada, setSelecionada] = useState<Fatura | null>(null);
 
-  // Produtos (banco + extras localStorage)
-  const [extras, setExtras] = useState<Produto[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(LS_PRODUTOS) || "[]");
-    } catch {
-      return [];
+  // Produtos — agora vivem na nuvem, partilhados entre dispositivos
+  const [todosProdutos, setTodosProdutos] = useState<Produto[]>([]);
+  const [carregandoProdutos, setCarregandoProdutos] = useState(true);
+  const [importando, setImportando] = useState(false);
+
+  const recarregarProdutos = async () => {
+    setCarregandoProdutos(true);
+    const { data, error } = await supabase
+      .from("produtos")
+      .select("codigo,nome,preco,qtd")
+      .order("nome", { ascending: true });
+    if (error) {
+      console.error("Erro a carregar produtos:", error);
+      alert("Erro a carregar produtos: " + error.message);
+    } else {
+      setTodosProdutos((data ?? []).map((p) => ({
+        codigo: p.codigo,
+        nome: p.nome,
+        preco: Number(p.preco),
+        qtd: p.qtd,
+      })));
     }
-  });
-  const [edits, setEdits] = useState<Record<string, Partial<Produto>>>(() => {
-    try { return JSON.parse(localStorage.getItem(LS_PROD_EDITS) || "{}"); } catch { return {}; }
-  });
-  const [hidden, setHidden] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem(LS_PROD_HIDDEN) || "[]"); } catch { return []; }
-  });
-  const todosProdutos = useMemo(() => {
-    const merged = [...extras, ...PRODUTOS]
-      .filter((p) => !hidden.includes(p.codigo))
-      .map((p) => (edits[p.codigo] ? { ...p, ...edits[p.codigo] } : p));
-    return merged;
-  }, [extras, edits, hidden]);
+    setCarregandoProdutos(false);
+  };
+
+  useEffect(() => {
+    recarregarProdutos();
+    // realtime: sincronização entre dispositivos
+    const ch = supabase
+      .channel("produtos-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "produtos" }, () => {
+        recarregarProdutos();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
+  const importarCatalogoBase = async () => {
+    if (!confirm(`Importar ${PRODUTOS.length} produtos do catálogo base para a nuvem?`)) return;
+    setImportando(true);
+    // Lotes de 500
+    const rows = PRODUTOS.map((p) => ({
+      codigo: p.codigo, nome: p.nome, preco: p.preco, qtd: p.qtd,
+    }));
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500);
+      const { error } = await supabase.from("produtos").upsert(chunk, { onConflict: "codigo" });
+      if (error) {
+        alert("Erro na importação: " + error.message);
+        setImportando(false);
+        return;
+      }
+    }
+    setImportando(false);
+    alert("Catálogo importado!");
+    recarregarProdutos();
+  };
   const [filtroProd, setFiltroProd] = useState("");
   const [showScanner, setShowScanner] = useState(false);
   const [showNovoProd, setShowNovoProd] = useState(false);
@@ -366,43 +403,32 @@ function Sistema() {
       .slice(0, 200);
   }, [todosProdutos, filtroProd]);
 
-  const salvarNovoProduto = (p: Produto) => {
-    const novosExtras = [p, ...extras];
-    setExtras(novosExtras);
-    localStorage.setItem(LS_PRODUTOS, JSON.stringify(novosExtras));
+  const salvarNovoProduto = async (p: Produto) => {
+    const { error } = await supabase.from("produtos").insert({
+      codigo: p.codigo, nome: p.nome, preco: p.preco, qtd: p.qtd,
+    });
+    if (error) { alert("Erro: " + error.message); return; }
     setShowNovoProd(false);
-    alert(`Produto "${p.nome}" cadastrado!`);
+    recarregarProdutos();
   };
 
-  const eliminarProduto = (p: Produto) => {
+  const eliminarProduto = async (p: Produto) => {
     if (!confirm(`Eliminar "${p.nome}"?`)) return;
-    // Se for um produto extra (cadastrado pelo user), remove da lista de extras.
-    const isExtra = extras.some((x) => x.codigo === p.codigo);
-    if (isExtra) {
-      const novos = extras.filter((x) => x.codigo !== p.codigo);
-      setExtras(novos);
-      localStorage.setItem(LS_PRODUTOS, JSON.stringify(novos));
-    } else {
-      const novos = [...hidden, p.codigo];
-      setHidden(novos);
-      localStorage.setItem(LS_PROD_HIDDEN, JSON.stringify(novos));
-    }
+    const { error } = await supabase.from("produtos").delete().eq("codigo", p.codigo);
+    if (error) { alert("Erro: " + error.message); return; }
+    recarregarProdutos();
   };
 
   const alterarProduto = (p: Produto) => setEditProd(p);
 
-  const salvarAlteracao = (p: Produto) => {
-    const isExtra = extras.some((x) => x.codigo === p.codigo);
-    if (isExtra) {
-      const novos = extras.map((x) => (x.codigo === p.codigo ? p : x));
-      setExtras(novos);
-      localStorage.setItem(LS_PRODUTOS, JSON.stringify(novos));
-    } else {
-      const novos = { ...edits, [p.codigo]: { nome: p.nome, preco: p.preco, qtd: p.qtd } };
-      setEdits(novos);
-      localStorage.setItem(LS_PROD_EDITS, JSON.stringify(novos));
-    }
+  const salvarAlteracao = async (p: Produto) => {
+    const { error } = await supabase
+      .from("produtos")
+      .update({ nome: p.nome, preco: p.preco, qtd: p.qtd })
+      .eq("codigo", p.codigo);
+    if (error) { alert("Erro: " + error.message); return; }
     setEditProd(null);
+    recarregarProdutos();
   };
 
   // Form de fatura
