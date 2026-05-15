@@ -652,7 +652,9 @@ function Sistema() {
         </div>
       </header>
 
-      {view === "lista" ? (
+      {view === "admin" ? (
+        <AdminPanel roles={roles} />
+      ) : view === "lista" ? (
         <section className="bg-slate-800 p-3 md:p-5 rounded-2xl">
           <h3 className="text-yellow-400 font-bold mb-3">Faturas Guardadas</h3>
           {faturas.length === 0 ? (
