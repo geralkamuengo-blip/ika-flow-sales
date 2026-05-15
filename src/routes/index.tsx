@@ -365,9 +365,19 @@ async function imprimirPDF(f: Fatura) {
 
 // =============== Sistema ===============
 function Sistema() {
-  const [view, setView] = useState<"fatura" | "lista">("fatura");
+  const [view, setView] = useState<"fatura" | "lista" | "admin">("fatura");
   const [faturas, setFaturas] = useState<Fatura[]>([]);
   const [selecionada, setSelecionada] = useState<Fatura | null>(null);
+
+  // Papéis do utilizador (gerente / contabilista)
+  const [roles, setRoles] = useState<string[]>([]);
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.rpc("my_roles");
+      if (!error && data) setRoles((data as string[]) ?? []);
+    })();
+  }, []);
+  const podeAdmin = roles.includes("gerente") || roles.includes("contabilista");
 
   // Produtos — agora vivem na nuvem, partilhados entre dispositivos
   const [todosProdutos, setTodosProdutos] = useState<Produto[]>([]);
@@ -621,6 +631,15 @@ function Sistema() {
           >
             {view === "fatura" ? "Ver Faturas" : "Nova Fatura"}
           </button>
+          {podeAdmin && (
+            <button
+              onClick={() => setView(view === "admin" ? "fatura" : "admin")}
+              className="px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold"
+              title="Painel administrativo"
+            >
+              {view === "admin" ? "Voltar" : "📊 Admin"}
+            </button>
+          )}
           <button
             onClick={() => supabase.auth.signOut()}
             className="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold"
