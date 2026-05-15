@@ -364,10 +364,218 @@ async function imprimirPDF(f: Fatura) {
 }
 
 // =============== Sistema ===============
+
+// =============== Admin Panel ===============
+type Periodo = "diario" | "semanal" | "mensal" | "anual";
+
+function AdminPanel({ roles }: { roles: string[] }) {
+  const [periodo, setPeriodo] = useState<Periodo>("diario");
+  const [carregando, setCarregando] = useState(true);
+  const [faturas, setFaturas] = useState<
+    { codigo: string; total: number; created_at: string; pagamento: string }[]
+  >([]);
+  const [erro, setErro] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      setCarregando(true);
+      const { data, error } = await supabase
+        .from("faturas")
+        .select("codigo,total,created_at,pagamento")
+        .order("created_at", { ascending: false });
+      if (error) setErro(error.message);
+      else
+        setFaturas(
+          (data ?? []).map((f) => ({
+            codigo: f.codigo,
+            total: Number(f.total),
+            created_at: f.created_at,
+            pagamento: f.pagamento,
+          })),
+        );
+      setCarregando(false);
+    })();
+  }, []);
+
+  const agora = new Date();
+  const inicio = useMemo(() => {
+    const d = new Date(agora);
+    if (periodo === "diario") d.setHours(0, 0, 0, 0);
+    else if (periodo === "semanal") {
+      const dia = d.getDay() === 0 ? 6 : d.getDay() - 1;
+      d.setDate(d.getDate() - dia);
+      d.setHours(0, 0, 0, 0);
+    } else if (periodo === "mensal") {
+      d.setDate(1);
+      d.setHours(0, 0, 0, 0);
+    } else {
+      d.setMonth(0, 1);
+      d.setHours(0, 0, 0, 0);
+    }
+    return d;
+  }, [periodo]);
+
+  const filtradas = faturas.filter((f) => new Date(f.created_at) >= inicio);
+  const total = filtradas.reduce((s, f) => s + f.total, 0);
+  const numFaturas = filtradas.length;
+  const ticketMedio = numFaturas > 0 ? total / numFaturas : 0;
+
+  // Agrupar por dia para mini-tabela
+  const porDia = useMemo(() => {
+    const m = new Map<string, { total: number; n: number }>();
+    filtradas.forEach((f) => {
+      const d = new Date(f.created_at).toLocaleDateString("pt-PT");
+      const e = m.get(d) ?? { total: 0, n: 0 };
+      e.total += f.total;
+      e.n += 1;
+      m.set(d, e);
+    });
+    return Array.from(m.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [filtradas]);
+
+  const labels: Record<Periodo, string> = {
+    diario: "Hoje",
+    semanal: "Esta semana",
+    mensal: "Este mês",
+    anual: "Este ano",
+  };
+
+  return (
+    <section className="bg-slate-800 p-3 md:p-5 rounded-2xl space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="text-yellow-400 font-bold text-lg">📊 Painel Administrativo</h3>
+        <span className="text-xs text-slate-400">
+          Sessão: {roles.join(", ") || "sem papel"}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {(["diario", "semanal", "mensal", "anual"] as Periodo[]).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriodo(p)}
+            className={`px-3 py-2 rounded-lg font-bold text-sm ${
+              periodo === p ? "bg-yellow-400 text-black" : "bg-slate-700 text-white hover:bg-slate-600"
+            }`}
+          >
+            {labels[p]}
+          </button>
+        ))}
+      </div>
+
+      {erro && <p className="text-red-400 text-sm">Erro: {erro}</p>}
+      {carregando ? (
+        <p className="text-slate-300">A carregar dados…</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 p-4 rounded-xl">
+              <p className="text-xs text-emerald-100">Total faturado</p>
+              <p className="text-2xl font-bold">{fmt(total)}</p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-4 rounded-xl">
+              <p className="text-xs text-blue-100">Nº de faturas</p>
+              <p className="text-2xl font-bold">{numFaturas}</p>
+            </div>
+            <div className="bg-gradient-to-br from-purple-600 to-purple-800 p-4 rounded-xl">
+              <p className="text-xs text-purple-100">Ticket médio</p>
+              <p className="text-2xl font-bold">{fmt(Math.round(ticketMedio))}</p>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 p-3 rounded-xl">
+            <h4 className="text-yellow-400 font-bold mb-2 text-sm">Detalhe por dia</h4>
+            {porDia.length === 0 ? (
+              <p className="text-slate-400 text-sm">Sem faturas no período.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-slate-300 border-b border-slate-700">
+                      <th className="p-2">Data</th>
+                      <th className="p-2 text-right">Nº</th>
+                      <th className="p-2 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {porDia.map(([d, v]) => (
+                      <tr key={d} className="border-b border-slate-800">
+                        <td className="p-2">{d}</td>
+                        <td className="p-2 text-right">{v.n}</td>
+                        <td className="p-2 text-right font-bold">{fmt(v.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {roles.includes("gerente") && <GestaoPapeis />}
+        </>
+      )}
+    </section>
+  );
+}
+
+function GestaoPapeis() {
+  const [email, setEmail] = useState("");
+  const [papel, setPapel] = useState<"gerente" | "contabilista">("contabilista");
+  const [msg, setMsg] = useState("");
+
+  const atribuir = async () => {
+    setMsg("");
+    // Procurar utilizador na tabela faturas (criado_por) ou pedir o ID — simplificação: usar RPC seria melhor.
+    // Como não temos endpoint admin, mostramos instrução.
+    setMsg(
+      `Para atribuir o papel "${papel}" a ${email}, peça ao utilizador para criar conta primeiro. Depois contacte o suporte ou execute manualmente na base de dados (apenas o email www.tonyloceulombe@gmail.com recebe gerente automaticamente).`,
+    );
+  };
+
+  return (
+    <div className="bg-slate-900 p-3 rounded-xl">
+      <h4 className="text-yellow-400 font-bold mb-2 text-sm">Gestão de papéis (gerente)</h4>
+      <div className="flex flex-wrap gap-2">
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="email@exemplo.com"
+          className="flex-1 min-w-[200px] p-2 rounded bg-white text-slate-900 text-sm"
+        />
+        <select
+          value={papel}
+          onChange={(e) => setPapel(e.target.value as "gerente" | "contabilista")}
+          className="p-2 rounded bg-white text-slate-900 text-sm"
+        >
+          <option value="contabilista">Contabilista</option>
+          <option value="gerente">Gerente</option>
+        </select>
+        <button
+          onClick={atribuir}
+          className="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 font-bold text-sm"
+        >
+          Atribuir
+        </button>
+      </div>
+      {msg && <p className="text-xs text-slate-300 mt-2">{msg}</p>}
+    </div>
+  );
+}
+
 function Sistema() {
-  const [view, setView] = useState<"fatura" | "lista">("fatura");
+  const [view, setView] = useState<"fatura" | "lista" | "admin">("fatura");
   const [faturas, setFaturas] = useState<Fatura[]>([]);
   const [selecionada, setSelecionada] = useState<Fatura | null>(null);
+
+  // Papéis do utilizador (gerente / contabilista)
+  const [roles, setRoles] = useState<string[]>([]);
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.rpc("my_roles");
+      if (!error && data) setRoles((data as string[]) ?? []);
+    })();
+  }, []);
+  const podeAdmin = roles.includes("gerente") || roles.includes("contabilista");
 
   // Produtos — agora vivem na nuvem, partilhados entre dispositivos
   const [todosProdutos, setTodosProdutos] = useState<Produto[]>([]);
@@ -621,6 +829,15 @@ function Sistema() {
           >
             {view === "fatura" ? "Ver Faturas" : "Nova Fatura"}
           </button>
+          {podeAdmin && (
+            <button
+              onClick={() => setView(view === "admin" ? "fatura" : "admin")}
+              className="px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold"
+              title="Painel administrativo"
+            >
+              {view === "admin" ? "Voltar" : "📊 Admin"}
+            </button>
+          )}
           <button
             onClick={() => supabase.auth.signOut()}
             className="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold"
@@ -633,7 +850,9 @@ function Sistema() {
         </div>
       </header>
 
-      {view === "lista" ? (
+      {view === "admin" ? (
+        <AdminPanel roles={roles} />
+      ) : view === "lista" ? (
         <section className="bg-slate-800 p-3 md:p-5 rounded-2xl">
           <h3 className="text-yellow-400 font-bold mb-3">Faturas Guardadas</h3>
           {faturas.length === 0 ? (
