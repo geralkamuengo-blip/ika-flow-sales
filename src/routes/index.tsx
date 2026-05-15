@@ -638,6 +638,7 @@ function Sistema() {
   const [showScanner, setShowScanner] = useState(false);
   const [showNovoProd, setShowNovoProd] = useState(false);
   const [editProd, setEditProd] = useState<Produto | null>(null);
+  const [showCatalogo, setShowCatalogo] = useState(false);
 
   const produtosFiltrados = useMemo(() => {
     const t = filtroProd.trim().toLowerCase();
@@ -959,89 +960,131 @@ function Sistema() {
         </section>
       ) : (
         <div className="grid lg:grid-cols-3 gap-4">
-          {/* Catálogo de Produtos — estilo lista scroll */}
+          {/* Catálogo — agora escondido atrás de botões; lista abre em modal */}
           <section className="bg-slate-800 p-3 md:p-4 rounded-2xl lg:col-span-1 order-1">
             <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-              <h3 className="text-yellow-400 font-bold">Catálogo</h3>
-              <div className="flex gap-2">
+              <h3 className="text-yellow-400 font-bold">Produtos</h3>
+              <span className="text-xs text-slate-400">{todosProdutos.length} no catálogo</span>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                onClick={() => setShowCatalogo(true)}
+                className="w-full p-3 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold text-sm"
+              >
+                📋 Ver produtos / Pesquisar texto
+              </button>
+              <button
+                onClick={() => setShowScanner(true)}
+                className="w-full p-3 rounded-lg bg-blue-600 hover:bg-blue-700 font-bold text-sm"
+              >
+                📷 Pesquisar por código de barras
+              </button>
+              <button
+                onClick={() => setShowNovoProd(true)}
+                className="w-full p-3 rounded-lg bg-green-500 hover:bg-green-600 font-bold text-sm"
+              >
+                ➕ Cadastrar novo produto
+              </button>
+              {!carregandoProdutos && todosProdutos.length === 0 && (
                 <button
-                  onClick={() => setShowScanner(true)}
-                  title="Scanner de câmera"
-                  className="px-2 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 font-bold"
+                  onClick={importarCatalogoBase}
+                  disabled={importando}
+                  className="w-full p-2 text-xs rounded bg-purple-600 hover:bg-purple-700 font-bold disabled:opacity-50"
                 >
-                  📷 Scan
+                  {importando ? "A importar…" : `📥 Importar ${PRODUTOS.length} produtos do catálogo base`}
                 </button>
-                <button
-                  onClick={() => setShowNovoProd(true)}
-                  className="px-2 py-1 text-xs rounded bg-green-500 hover:bg-green-600 font-bold"
-                >
-                  + Novo
-                </button>
+              )}
+            </div>
+          </section>
+
+          {showCatalogo && (
+            <div
+              className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-2 sm:p-4"
+              onClick={() => setShowCatalogo(false)}
+            >
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl"
+              >
+                <div className="flex items-center justify-between p-3 border-b border-slate-700">
+                  <h3 className="text-yellow-400 font-bold">Catálogo de Produtos</h3>
+                  <button
+                    onClick={() => setShowCatalogo(false)}
+                    className="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="p-3 space-y-2 border-b border-slate-700">
+                  <input
+                    autoFocus
+                    className={inputCls + " mt-0"}
+                    placeholder="Pesquisar por nome ou código…"
+                    value={filtroProd}
+                    onChange={(e) => setFiltroProd(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setShowCatalogo(false); setShowScanner(true); }}
+                      className="flex-1 px-2 py-2 text-xs rounded bg-blue-600 hover:bg-blue-700 font-bold"
+                    >
+                      📷 Scanner
+                    </button>
+                    <button
+                      onClick={() => { setShowCatalogo(false); setShowNovoProd(true); }}
+                      className="flex-1 px-2 py-2 text-xs rounded bg-green-500 hover:bg-green-600 font-bold"
+                    >
+                      ➕ Novo
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    {todosProdutos.length} produtos · mostrando {produtosFiltrados.length}
+                  </p>
+                </div>
+                <ul className="flex-1 overflow-y-auto divide-y divide-slate-700">
+                  {produtosFiltrados.map((p) => (
+                    <li key={p.codigo} className="px-3 py-2 hover:bg-slate-700 text-sm">
+                      <div
+                        onClick={() => { aplicarProduto(p); setShowCatalogo(false); }}
+                        className="flex justify-between gap-2 cursor-pointer"
+                      >
+                        <span className="truncate font-medium text-white">{p.nome}</span>
+                        <span className="text-blue-300 whitespace-nowrap">{fmt(p.preco)}</span>
+                      </div>
+                      <div
+                        onClick={() => { aplicarProduto(p); setShowCatalogo(false); }}
+                        className="flex justify-between text-xs text-slate-400 cursor-pointer"
+                      >
+                        <span>{p.codigo}</span>
+                        <span className={p.qtd > 0 ? "text-green-400" : "text-red-400"}>
+                          stock {p.qtd}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 mt-1">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); alterarProduto(p); }}
+                          className="flex-1 px-2 py-1 text-xs rounded bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold"
+                        >
+                          ✎ Alterar
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); eliminarProduto(p); }}
+                          className="flex-1 px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 font-bold"
+                        >
+                          🗑 Eliminar
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                  {produtosFiltrados.length === 0 && (
+                    <li className="px-3 py-4 text-center text-slate-400 text-sm">
+                      Nenhum produto encontrado
+                    </li>
+                  )}
+                </ul>
               </div>
             </div>
-            <input
-              className={inputCls + " mt-0"}
-              placeholder="Pesquisar por nome ou código…"
-              value={filtroProd}
-              onChange={(e) => setFiltroProd(e.target.value)}
-            />
-            <p className="text-xs text-slate-400 mt-2">
-              {todosProdutos.length} produtos · mostrando {produtosFiltrados.length}
-            </p>
-            {!carregandoProdutos && todosProdutos.length === 0 && (
-              <button
-                onClick={importarCatalogoBase}
-                disabled={importando}
-                className="w-full mt-2 p-2 text-xs rounded bg-purple-600 hover:bg-purple-700 font-bold disabled:opacity-50"
-              >
-                {importando ? "A importar…" : `📥 Importar ${PRODUTOS.length} produtos do catálogo base`}
-              </button>
-            )}
-            <ul className="mt-2 max-h-[420px] overflow-y-auto divide-y divide-slate-700 rounded-lg bg-slate-900">
-              {produtosFiltrados.map((p) => (
-                <li
-                  key={p.codigo}
-                  className="px-3 py-2 hover:bg-slate-700 text-sm"
-                >
-                  <div
-                    onClick={() => aplicarProduto(p)}
-                    className="flex justify-between gap-2 cursor-pointer"
-                  >
-                    <span className="truncate font-medium text-white">{p.nome}</span>
-                    <span className="text-blue-300 whitespace-nowrap">{fmt(p.preco)}</span>
-                  </div>
-                  <div
-                    onClick={() => aplicarProduto(p)}
-                    className="flex justify-between text-xs text-slate-400 cursor-pointer"
-                  >
-                    <span>{p.codigo}</span>
-                    <span className={p.qtd > 0 ? "text-green-400" : "text-red-400"}>
-                      stock {p.qtd}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 mt-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); alterarProduto(p); }}
-                      className="flex-1 px-2 py-1 text-xs rounded bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold"
-                    >
-                      ✎ Alterar
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); eliminarProduto(p); }}
-                      className="flex-1 px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 font-bold"
-                    >
-                      🗑 Eliminar
-                    </button>
-                  </div>
-                </li>
-              ))}
-              {produtosFiltrados.length === 0 && (
-                <li className="px-3 py-4 text-center text-slate-400 text-sm">
-                  Nenhum produto encontrado
-                </li>
-              )}
-            </ul>
-          </section>
+          )}
 
           {/* Formulário */}
           <section className="bg-slate-100 text-slate-900 p-3 md:p-5 rounded-2xl lg:col-span-1 order-2">
