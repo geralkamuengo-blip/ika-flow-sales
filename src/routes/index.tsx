@@ -767,7 +767,26 @@ function Sistema() {
       criado_por: userData.user?.id ?? null,
     });
     if (error) { alert("Erro ao guardar fatura: " + error.message); return; }
-    alert("Fatura guardada na nuvem!");
+
+    // Abater do stock cada item vendido
+    const consumo = new Map<string, number>();
+    for (const it of dados.items) {
+      const key = it.designacao;
+      consumo.set(key, (consumo.get(key) ?? 0) + Number(it.qtd || 0));
+    }
+    const erros: string[] = [];
+    for (const [nome, qtdVendida] of consumo) {
+      const prod = todosProdutos.find((p) => p.nome === nome);
+      if (!prod) continue;
+      const novoStock = Math.max(0, (prod.qtd ?? 0) - qtdVendida);
+      const { error: upErr } = await supabase
+        .from("produtos")
+        .update({ qtd: novoStock })
+        .eq("codigo", prod.codigo);
+      if (upErr) erros.push(`${nome}: ${upErr.message}`);
+    }
+    if (erros.length) alert("Fatura guardada, mas falhou atualizar stock:\n" + erros.join("\n"));
+    else alert("Fatura guardada e stock atualizado!");
     calcularProximoCodigo();
   };
 
