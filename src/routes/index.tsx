@@ -330,10 +330,25 @@ async function gerarPDFDoc(f: Fatura) {
   return doc;
 }
 
+function sanitizar(s: string) {
+  return (s || "")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\\/:*?"<>|]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function nomePDF(f: Fatura) {
+  const nome = sanitizar(f.nome) || "SemNome";
+  const servico = sanitizar(f.servico) || "SemServico";
+  const codigo = sanitizar(f.codigo) || "SemCodigo";
+  return `${nome} - ${servico} - ${codigo}.pdf`;
+}
+
 async function partilharFatura(f: Fatura) {
   const doc = await gerarPDFDoc(f);
   const blob: Blob = doc.output("blob");
-  const file = new File([blob], `${f.codigo}.pdf`, { type: "application/pdf" });
+  const fname = nomePDF(f);
+  const file = new File([blob], fname, { type: "application/pdf" });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav: any = navigator;
   if (nav.canShare && nav.canShare({ files: [file] })) {
@@ -346,7 +361,7 @@ async function partilharFatura(f: Fatura) {
     }
   }
   // fallback: download
-  await guardarPDFKamuengo(blob, f.codigo);
+  await guardarPDFKamuengo(blob, fname);
 }
 
 // ============ Guardar PDF em "KAMUENGO GERAL" ============
@@ -381,8 +396,8 @@ async function obterPastaKamuengo(): Promise<any | null> {
   }
 }
 
-async function guardarPDFKamuengo(blob: Blob, codigo: string) {
-  const nome = `${codigo}.pdf`;
+async function guardarPDFKamuengo(blob: Blob, nomeFicheiro: string) {
+  const nome = nomeFicheiro.endsWith(".pdf") ? nomeFicheiro : `${nomeFicheiro}.pdf`;
   const pasta = await obterPastaKamuengo();
   if (pasta) {
     try {
@@ -1312,7 +1327,7 @@ function Sistema() {
               <button onClick={imprimir} className="px-3 py-3 rounded-lg bg-orange-500 hover:bg-orange-600 font-bold text-sm">
                 Imprimir
               </button>
-              <button onClick={async () => { const d = await gerarPDFDoc(faturaAtual()); const blob: Blob = d.output("blob"); await guardarPDFKamuengo(blob, codigo); }} className="px-3 py-3 rounded-lg bg-rose-600 hover:bg-rose-700 font-bold text-sm">
+              <button onClick={async () => { const f = faturaAtual(); const d = await gerarPDFDoc(f); const blob: Blob = d.output("blob"); await guardarPDFKamuengo(blob, nomePDF(f)); }} className="px-3 py-3 rounded-lg bg-rose-600 hover:bg-rose-700 font-bold text-sm">
                 PDF
               </button>
               <button onClick={() => partilharFatura(faturaAtual())} className="px-3 py-3 rounded-lg bg-green-600 hover:bg-green-700 font-bold text-sm">
