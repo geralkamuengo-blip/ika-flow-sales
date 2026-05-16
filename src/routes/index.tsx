@@ -776,7 +776,7 @@ function Sistema() {
     }
     const erros: string[] = [];
     for (const [nome, qtdVendida] of consumo) {
-      const prod = produtos.find((p) => p.nome === nome);
+      const prod = todosProdutos.find((p) => p.nome === nome);
       if (!prod) continue;
       const novoStock = Math.max(0, (prod.qtd ?? 0) - qtdVendida);
       const { error: upErr } = await supabase
