@@ -346,13 +346,68 @@ async function partilharFatura(f: Fatura) {
     }
   }
   // fallback: download
+  await guardarPDFKamuengo(blob, f.codigo);
+}
+
+// ============ Guardar PDF em "KAMUENGO GERAL" ============
+// Desktop (Chrome/Edge): pede ao utilizador para escolher/criar a pasta
+// "KAMUENGO GERAL" dentro de Transferências (apenas 1ª vez, depois fica memorizada).
+// Mobile / browsers sem suporte: descarrega com o prefixo "KAMUENGO GERAL - "
+// para que o utilizador possa mover/criar a pasta KAMUENGO GERAL no Armazenamento Interno.
+let dirHandleCache: any = null;
+async function obterPastaKamuengo(): Promise<any | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const w: any = window;
+  if (!w.showDirectoryPicker) return null;
+  if (dirHandleCache) {
+    try {
+      const perm = await dirHandleCache.queryPermission?.({ mode: "readwrite" });
+      if (perm === "granted") return dirHandleCache;
+      const req = await dirHandleCache.requestPermission?.({ mode: "readwrite" });
+      if (req === "granted") return dirHandleCache;
+    } catch { /* ignore */ }
+  }
+  try {
+    const root = await w.showDirectoryPicker({ id: "kamuengo-geral", mode: "readwrite", startIn: "downloads" });
+    // garante subpasta KAMUENGO GERAL
+    let pasta = root;
+    try {
+      pasta = await root.getDirectoryHandle("KAMUENGO GERAL", { create: true });
+    } catch { pasta = root; }
+    dirHandleCache = pasta;
+    return pasta;
+  } catch {
+    return null;
+  }
+}
+
+async function guardarPDFKamuengo(blob: Blob, codigo: string) {
+  const nome = `${codigo}.pdf`;
+  const pasta = await obterPastaKamuengo();
+  if (pasta) {
+    try {
+      const fh = await pasta.getFileHandle(nome, { create: true });
+      const ws = await fh.createWritable();
+      await ws.write(blob);
+      await ws.close();
+      alert(`Fatura guardada em KAMUENGO GERAL/${nome}`);
+      return;
+    } catch (e) {
+      console.error("Falha ao guardar na pasta KAMUENGO GERAL:", e);
+    }
+  }
+  // Fallback (mobile / sem File System Access API):
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${f.codigo}.pdf`;
+  a.download = `KAMUENGO GERAL - ${nome}`;
   a.click();
   URL.revokeObjectURL(url);
-  alert("Partilha não suportada — PDF transferido.");
+  alert(
+    "PDF transferido com o prefixo \"KAMUENGO GERAL\".\n\n" +
+    "📱 Telemóvel: mova o ficheiro para Armazenamento Interno › KAMUENGO GERAL.\n" +
+    "💻 PC: o ficheiro está em Transferências — pode movê-lo para a pasta KAMUENGO GERAL."
+  );
 }
 
 async function imprimirPDF(f: Fatura) {
@@ -1257,7 +1312,7 @@ function Sistema() {
               <button onClick={imprimir} className="px-3 py-3 rounded-lg bg-orange-500 hover:bg-orange-600 font-bold text-sm">
                 Imprimir
               </button>
-              <button onClick={() => gerarPDFDoc(faturaAtual()).then((d) => d.save(`${codigo}.pdf`))} className="px-3 py-3 rounded-lg bg-rose-600 hover:bg-rose-700 font-bold text-sm">
+              <button onClick={async () => { const d = await gerarPDFDoc(faturaAtual()); const blob: Blob = d.output("blob"); await guardarPDFKamuengo(blob, codigo); }} className="px-3 py-3 rounded-lg bg-rose-600 hover:bg-rose-700 font-bold text-sm">
                 PDF
               </button>
               <button onClick={() => partilharFatura(faturaAtual())} className="px-3 py-3 rounded-lg bg-green-600 hover:bg-green-700 font-bold text-sm">
