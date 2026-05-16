@@ -1312,7 +1312,7 @@ function Sistema() {
               <button onClick={imprimir} className="px-3 py-3 rounded-lg bg-orange-500 hover:bg-orange-600 font-bold text-sm">
                 Imprimir
               </button>
-              <button onClick={() => gerarPDFDoc(faturaAtual()).then((d) => d.save(`${codigo}.pdf`))} className="px-3 py-3 rounded-lg bg-rose-600 hover:bg-rose-700 font-bold text-sm">
+              <button onClick={async () => { const d = await gerarPDFDoc(faturaAtual()); const blob: Blob = d.output("blob"); await guardarPDFKamuengo(blob, codigo); }} className="px-3 py-3 rounded-lg bg-rose-600 hover:bg-rose-700 font-bold text-sm">
                 PDF
               </button>
               <button onClick={() => partilharFatura(faturaAtual())} className="px-3 py-3 rounded-lg bg-green-600 hover:bg-green-700 font-bold text-sm">
